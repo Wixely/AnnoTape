@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>AnnoTape.App</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../AnnoTape.Core/AnnoTape.Core.csproj" />
+    <ProjectReference Include="$(CupriFaceRoot)/src/CupriFace/CupriFace.csproj" />
+    <ProjectReference Include="$(CupriFaceRoot)/src/CupriFace.Binding.Gen/CupriFace.Binding.Gen.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="$(CupriFaceRoot)/src/CupriFace.Resources.Gen/CupriFace.Resources.Gen.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Import Project="$(CupriFaceRoot)/src/CupriFace.Resources.targets" />
+</Project>
+

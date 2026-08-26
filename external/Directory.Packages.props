@@ -1,0 +1,8 @@
+<Project>
+  <!-- Prevent this repository's central package versions applying to the separately checked-out
+       CupriFace source tree used by CI. CupriFace pins its own dependency versions. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>
+

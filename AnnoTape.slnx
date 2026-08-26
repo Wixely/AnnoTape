@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AnnoTape.Core/AnnoTape.Core.csproj" />
+    <Project Path="src/AnnoTape.App/AnnoTape.App.csproj" />
+    <Project Path="src/AnnoTape.Android/AnnoTape.Android.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AnnoTape.Core.Tests/AnnoTape.Core.Tests.csproj" />
+    <Project Path="tests/AnnoTape.App.Tests/AnnoTape.App.Tests.csproj" />
+  </Folder>
+</Solution>
+

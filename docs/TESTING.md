@@ -1,0 +1,23 @@
+# Verification and acceptance
+
+## Automated gates
+
+Run both test projects and build the Android host. Tests cover normalized transforms, unit parsing, feet/inches fractions, command history, SQLite round-trip, every DnaX historical migration chain, pre-DnaX database adoption, pending-operation state, source-resolution orientation, metadata-removing re-encode, and a headless CupriFace render.
+
+## Required device matrix before release
+
+The following work remains owned by the release tester (owner: TBD):
+
+- API 24 fallback document picker and API 33+ photo picker
+- camera success, cancellation, unavailable-camera handling, and full-resolution return
+- portrait/landscape, activity recreation, background/foreground, and developer-option “Don't keep activities”
+- force-stop/process death while camera or picker is open, followed by safe retry/recovery
+- picker and camera return must show the selected editor after the one-shot graphics-host recreation, never a black surface
+- small, typical, and large source images; low-storage export failure; cancelled share
+- one-finger pan, two-finger zoom, line creation, endpoint/label drag, and repeated grabs
+- source-to-export annotation alignment at 90°, 180°, and 270° orientation
+- TalkBack-only capture, edit, delete, undo, export, and return workflow
+- font scaling, cutouts, gesture navigation, keyboard reachability, and 44–48 dp touch targets
+- startup, picker return, decode, gesture latency, autosave, export time, and peak memory measurements
+
+Record the device model, Android version, source pixel dimensions, result, and date in ISO format. Broad Android compatibility must not be claimed until this matrix passes on representative hardware.

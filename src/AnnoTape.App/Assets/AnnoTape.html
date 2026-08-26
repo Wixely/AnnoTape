@@ -1,0 +1,70 @@
+<body>
+  <div class="app">
+    <main class="home" style="display:{{HomeDisplay}}">
+      <div class="brand"><span class="mark">↔</span><div><h1>AnnoTape</h1><span>annotate + tape measure</span></div></div>
+      <div class="hero">
+        <h2>Measure what matters.</h2>
+        <p>Capture a photo, draw a dimension, and enter the real value. Your work stays on this device.</p>
+        <cupri-button class="take-photo primary" aria-label="Take a photo">Take photo</cupri-button>
+        <cupri-button class="pick-photo" aria-label="Choose a photo">Choose photo</cupri-button>
+        <cupri-button class="new-project" aria-label="Start an empty project">New project</cupri-button>
+      </div>
+      <div class="recent"><b>Recent projects</b><span>{{RecentSummary}}</span>
+        <div class="recent-row" data-repeat="RecentProjects" data-open-project="{{Id}}" role="button" aria-label="Open {{Title}}">
+          <b>{{Title}}</b><span>{{Subtitle}}</span>
+        </div>
+      </div>
+      <p class="privacy">Offline by design · no account · no inferred measurements</p>
+    </main>
+
+    <main class="editor" style="display:{{EditorDisplay}}">
+      <header>
+        <div class="back-home tool" role="button" aria-label="Back to projects">‹</div>
+        <cupri-textfield class="title" value="{{ProjectTitle}}" aria-label="Project title"></cupri-textfield>
+        <span class="save-state">{{SaveState}}</span>
+      </header>
+
+      <div class="stage" data-editor="photo editor" aria-label="Photo editor. Pinch to zoom or drag to pan.">
+        <div class="empty" style="display:{{EmptyDisplay}}">
+          <b>Add a photo to begin</b><cupri-button class="take-photo">Camera</cupri-button><cupri-button class="pick-photo">Photo picker</cupri-button>
+        </div>
+        <div class="image-frame" style="{{ImageFrameStyle}}">
+          <cupri-image class="photo" src="{{ImageSource}}" fit="fill" aria-label="Source photo"></cupri-image>
+          <div class="{{ClassName}}" data-repeat="AnnotationViews">
+            <div class="dimension-line" style="{{LineStyle}}" data-select="{{Id}}"></div>
+            <div class="handle start" style="{{StartStyle}}" data-drag="start:{{Id}}" role="button" aria-label="Move first endpoint"></div>
+            <div class="handle end" style="{{EndStyle}}" data-drag="end:{{Id}}" role="button" aria-label="Move second endpoint"></div>
+            <div class="measure-label" style="{{LabelStyle}}" data-drag="label:{{Id}}" role="button" aria-label="Move measurement label">{{Caption}}</div>
+          </div>
+        </div>
+      </div>
+
+      <section class="inspector">
+        <div class="tools">
+          <div class="{{AddButtonClass}} add-measurement" role="button" aria-label="Add measurement">＋ Measure</div>
+          <div class="tool undo" role="button" aria-label="Undo">↶</div>
+          <div class="tool redo" role="button" aria-label="Redo">↷</div>
+          <div class="tool duplicate-measurement" role="button" aria-label="Duplicate selected measurement">⧉</div>
+          <div class="tool recolour-measurement" role="button" aria-label="Change selected measurement colour">●</div>
+          <div class="tool export-png" role="button" aria-label="Export PNG">PNG</div>
+          <div class="tool export-jpeg" role="button" aria-label="Export JPEG">JPG</div>
+        </div>
+        <div class="selection" style="display:{{InspectorDisplay}}">
+          <cupri-textfield class="label-input" value="{{MeasurementLabel}}" placeholder="Label (optional)" aria-label="Measurement label"></cupri-textfield>
+          <cupri-textfield class="value-input" value="{{MeasurementText}}" inputmode="decimal" aria-label="Measurement value"></cupri-textfield>
+          <cupri-select class="unit-input" value="{{UnitName}}" aria-label="Unit">
+            <option value="Millimetres">mm</option><option value="Centimetres">cm</option><option value="Metres">m</option>
+            <option value="Inches">inches</option><option value="FeetAndInches">feet/inches</option>
+          </cupri-select>
+          <div class="tool save-value" role="button" aria-label="Save measurement">Save</div>
+          <div class="tool danger delete-measurement" role="button" aria-label="Delete measurement">Delete</div>
+        </div>
+        <div class="details">
+          <cupri-textfield value="{{ProjectLocation}}" placeholder="Location (optional)" aria-label="Project location"></cupri-textfield>
+          <cupri-textfield value="{{ProjectNotes}}" placeholder="Project notes" aria-label="Project notes"></cupri-textfield>
+        </div>
+        <span class="status">{{Status}} · {{SelectionSummary}}</span>
+      </section>
+    </main>
+  </div>
+</body>

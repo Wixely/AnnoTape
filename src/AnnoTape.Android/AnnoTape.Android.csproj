@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion>24.0</TargetPlatformMinVersion>
+    <ApplicationId>app.annotape.mobile</ApplicationId>
+    <ApplicationTitle>AnnoTape</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <UseMonoRuntime>false</UseMonoRuntime>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <!-- Crossgen2 on Windows can hold the generated Android resource assembly mapped while
+         attempting to rewrite it (NETSDK1096). CoreCLR JIT is the verified CupriFace path, so
+         keep release packaging deterministic and measure R2R separately before enabling it. -->
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../AnnoTape.App/AnnoTape.App.csproj" />
+    <ProjectReference Include="../AnnoTape.Core/AnnoTape.Core.csproj" />
+    <ProjectReference Include="$(CupriFaceRoot)/src/CupriFace.Android/CupriFace.Android.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Xamarin.AndroidX.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources/**/*" />
+  </ItemGroup>
+</Project>

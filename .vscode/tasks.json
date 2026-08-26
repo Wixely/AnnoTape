@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build: Android debug",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "src/AnnoTape.Android/AnnoTape.Android.csproj", "-c", "Debug"],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "test: all",
+      "dependsOrder": "sequence",
+      "dependsOn": ["test: core", "test: app"],
+      "problemMatcher": []
+    },
+    {
+      "label": "test: core",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["test", "tests/AnnoTape.Core.Tests/AnnoTape.Core.Tests.csproj", "-c", "Debug"],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test: app",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["test", "tests/AnnoTape.App.Tests/AnnoTape.App.Tests.csproj", "-c", "Debug"],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "deploy: Android debug",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "src/AnnoTape.Android/AnnoTape.Android.csproj", "-c", "Debug", "-t:Install"],
+      "problemMatcher": "$msCompile",
+      "dependsOn": "build: Android debug"
+    },
+    {
+      "label": "launch: Android",
+      "type": "process",
+      "command": "adb",
+      "args": ["shell", "am", "start", "-n", "app.annotape.mobile/.MainActivity"],
+      "problemMatcher": [],
+      "dependsOn": "deploy: Android debug"
+    }
+  ]
+}
