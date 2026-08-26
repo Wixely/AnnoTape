@@ -33,6 +33,13 @@ public sealed class MainActivity : CupriActivity
     {
         _capabilities = new AndroidPlatformCapabilities(this);
         _app = new AnnoTapeApp(_capabilities);
+        _ = _app.Initialization.ContinueWith(_ =>
+        {
+            if (_app.InitializationError is { } error)
+                global::Android.Util.Log.Error("annotape", $"Background startup failed: {error}");
+            else
+                global::Android.Util.Log.Info("annotape", "Background startup completed.");
+        }, TaskScheduler.Default);
         _app.ExternalPhotoFlowCompleted += () => RunOnUiThread(() =>
         {
             if (IsFinishing || IsDestroyed) return;

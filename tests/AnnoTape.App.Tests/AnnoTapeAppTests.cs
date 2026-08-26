@@ -24,11 +24,13 @@ public sealed class AnnoTapeAppTests
     }
 
     [TestMethod]
-    public void PortableAppCreatesAndRendersAResponsiveDocument()
+    public async Task PortableAppCreatesAndRendersAResponsiveDocument()
     {
         var app = new AnnoTapeApp(new FakePlatform(_directory));
         using var document = app.CreateDocument();
         using var image = document.RenderToImage(400, 800, app.Background);
+        await app.Initialization;
+        Assert.IsNull(app.InitializationError);
         Assert.AreEqual(400, image.Width);
         Assert.AreEqual(800, image.Height);
         Assert.Contains("AnnoTape", app.Html);

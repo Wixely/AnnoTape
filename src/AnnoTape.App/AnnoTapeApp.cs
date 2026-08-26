@@ -19,7 +19,8 @@ public sealed class AnnoTapeApp : CupriApp
     private readonly EditorViewModel _model = new();
     private readonly ProjectRepository _repository;
     private readonly CrashSafeStorage _storage;
-    private readonly DebouncedAutosave _autosave;
+    private readonly Task _initialization;
+    private DebouncedAutosave? _autosave;
     private readonly EditorHistory _history = new();
     private readonly AnnotationExporter _exporter = new();
     private CupriDocument? _document;
@@ -39,19 +40,22 @@ public sealed class AnnoTapeApp : CupriApp
         _platform = platform;
         _platform.ExternalPhotoCompleted += selection =>
         {
-            if (selection is not null) RunDetached(() => AcceptSelectionAsync(selection));
+            if (selection is not null) RunDetached(async () =>
+            {
+                await EnsureInitializedAsync();
+                await AcceptSelectionAsync(selection);
+            });
         };
         _storage = new CrashSafeStorage(platform.AppDataPath);
         _storage.Initialize();
         _storage.CleanAbandonedStaging(TimeSpan.FromDays(1));
         _repository = new ProjectRepository(Path.Combine(platform.AppDataPath, "annotape.db"));
-        _repository.InitializeAsync().GetAwaiter().GetResult();
-        _autosave = new DebouncedAutosave(_repository, TimeSpan.FromMilliseconds(450));
-        LoadRecentAsync().GetAwaiter().GetResult();
-        RecoverPendingAsync().GetAwaiter().GetResult();
-        if (_storage.TakeHostRestartProject() is { } restartProjectId)
-            OpenProjectAsync(restartProjectId).GetAwaiter().GetResult();
+        _model.Status = "Starting storage…";
+        _initialization = Task.Run(InitializeApplicationAsync);
     }
+
+    public Task Initialization => _initialization;
+    public Exception? InitializationError { get; private set; }
 
     protected override CupriSource MarkupSource => Assets.AnnoTape.Html;
     protected override CupriSource StyleSource => Assets.AnnoTape.Css;
@@ -73,11 +77,16 @@ public sealed class AnnoTapeApp : CupriApp
     public override void Configure(CupriDocument document)
     {
         _document = document;
-        document.OnClick(".new-project", _ => NewProject());
+        document.OnClick(".new-project", _ => RunDetached(async () =>
+        {
+            await EnsureInitializedAsync();
+            NewProject();
+        }));
         document.OnClick(".pick-photo", _ => RunDetached(() => ImportAsync(camera: false)));
         document.OnClick(".take-photo", _ => RunDetached(() => ImportAsync(camera: true)));
         document.OnClick(".back-home", _ => RunDetached(async () =>
         {
+            await EnsureInitializedAsync();
             await FlushAsync();
             await LoadRecentAsync();
             _model.Page = "home";
@@ -93,7 +102,15 @@ public sealed class AnnoTapeApp : CupriApp
         document.OnClick(".export-png", _ => RunDetached(() => ExportAsync(ExportFormat.Png)));
         document.OnClick(".export-jpeg", _ => RunDetached(() => ExportAsync(ExportFormat.Jpeg)));
         document.OnAction("data-select", e => { Select(Guid.Parse(e.Value)); return true; });
-        document.OnAction("data-open-project", e => { RunDetached(() => OpenProjectAsync(Guid.Parse(e.Value))); return true; });
+        document.OnAction("data-open-project", e =>
+        {
+            RunDetached(async () =>
+            {
+                await EnsureInitializedAsync();
+                await OpenProjectAsync(Guid.Parse(e.Value));
+            });
+            return true;
+        });
         document.OnPointer("data-drag", HandleAnnotationDrag);
         document.OnPointer("data-editor", HandleEditorPointer);
     }
@@ -111,17 +128,18 @@ public sealed class AnnoTapeApp : CupriApp
         _model.Page = "editor";
         _selectedId = null;
         SyncSelection();
-        _autosave.Schedule(_project);
+        _autosave!.Schedule(_project);
     }
 
     private async Task ImportAsync(bool camera)
     {
         try
         {
+            await EnsureInitializedAsync();
             if (_model.Page != "editor") NewProject();
             var pending = new PendingExternalOperation(Guid.NewGuid(), camera ? "camera" : "picker", _project.Id, null, DateTimeOffset.UtcNow);
             _storage.WritePending(pending);
-            await _autosave.FlushAsync(_project);
+            await _autosave!.FlushAsync(_project);
             var selection = camera
                 ? await _platform.CapturePhotoAsync()
                 : await _platform.PickPhotoAsync();
@@ -166,14 +184,15 @@ public sealed class AnnoTapeApp : CupriApp
             ? "Photo imported. Choose Add measurement."
             : "Photo imported, but a display preview could not be created. Choose another photo.";
         _storage.ClearPending();
-        await _autosave.FlushAsync(_project);
+        await _autosave!.FlushAsync(_project);
         RebuildAnnotations();
     }
 
-    public Task FlushAsync(CancellationToken cancellationToken = default)
+    public async Task FlushAsync(CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
         SyncProjectDetails();
-        return _autosave.FlushAsync(_project, cancellationToken);
+        await _autosave!.FlushAsync(_project, cancellationToken);
     }
 
     private bool HandleEditorPointer(MultiPointerEvent pointer)
@@ -368,7 +387,7 @@ public sealed class AnnoTapeApp : CupriApp
     {
         SyncProjectDetails();
         _model.SaveState = "Saving…";
-        _autosave.Schedule(_project);
+        _autosave?.Schedule(_project);
         _model.SaveState = "Autosave queued";
         RebuildAnnotations();
     }
@@ -452,6 +471,36 @@ public sealed class AnnoTapeApp : CupriApp
         _selectedId = null;
         await _repository.SaveAsync(_project);
         RebuildAnnotations();
+    }
+
+    private async Task InitializeApplicationAsync()
+    {
+        try
+        {
+            await _repository.InitializeAsync();
+            _autosave = new DebouncedAutosave(_repository, TimeSpan.FromMilliseconds(450));
+            await LoadRecentAsync();
+            await RecoverPendingAsync();
+            if (_storage.TakeHostRestartProject() is { } restartProjectId)
+                await OpenProjectAsync(restartProjectId);
+            if (_model.Status == "Starting storage…") _model.Status = "Ready";
+        }
+        catch (Exception exception)
+        {
+            InitializationError = exception;
+            _model.Status = $"Storage startup failed: {exception.Message}";
+        }
+        finally
+        {
+            ScheduleRefresh();
+        }
+    }
+
+    private async Task EnsureInitializedAsync()
+    {
+        await _initialization;
+        if (_autosave is null)
+            throw new InvalidOperationException("Storage is unavailable.", InitializationError);
     }
 
     private void SyncProjectDetails()
