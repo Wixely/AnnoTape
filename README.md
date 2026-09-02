@@ -14,7 +14,7 @@ Version 0.1 uses one photo per project. The schema already supports ordered mult
 
 - C# and .NET 10
 - Plain .NET for Android (no MAUI, WebView, JavaScript, or browser shell)
-- [CupriFace](https://github.com/Wixely/CupriFace) at commit `c5a2cc7c939e5a78c10f3d82321698fa37be3d71`
+- [CupriFace](https://github.com/Wixely/CupriFace) `0.13.0`
 - SQLite with Dapper and DnaX `10.0.0-alpha.2` checksummed migrations
 - SkiaSharp source-resolution export
 - Minimum Android API 24; Android 13+ uses the system photo picker and earlier releases use `ACTION_OPEN_DOCUMENT`
@@ -25,12 +25,11 @@ ReadyToRun is disabled for the APK because the Windows Android toolchain attempt
 
 ## Build and test
 
-Prerequisites are .NET SDK `10.0.300`, the .NET Android workload, and clean CupriFace and DnaX checkouts beside this repository at their pinned commits:
+Prerequisites are .NET SDK `10.0.300`, the .NET Android workload, and a clean DnaX checkout beside this repository at its pinned commit:
 
 ```text
 git/
   AnnoTape/
-  CupriFace/   # pinned commit above
   DnaX/        # commit ab1471dd0caa3775f3bd26f9f12bf04d7df8752e
 ```
 
@@ -38,17 +37,18 @@ Then run:
 
 ```powershell
 .\eng\Prepare-DnaXPackages.ps1
+.\eng\Prepare-CupriFacePackages.ps1
 dotnet test tests\AnnoTape.Core.Tests\AnnoTape.Core.Tests.csproj -c Debug
 dotnet test tests\AnnoTape.App.Tests\AnnoTape.App.Tests.csproj -c Debug
 dotnet build src\AnnoTape.Android\AnnoTape.Android.csproj -c Debug
 ```
 
-The preparation script builds DnaX `10.0.0-alpha.2` NuGet packages into the ignored repository-local `.packages` feed and rejects a changed or incorrectly pinned DnaX checkout. Pass `-DnaXRoot C:\path\to\DnaX` when it is not beside AnnoTape.
+The preparation scripts populate the ignored repository-local `.packages` feed. DnaX is built from its pinned checkout; CupriFace `0.13.0` is downloaded from its official GitHub release and verified by SHA-256. Pass `-DnaXRoot C:\path\to\DnaX` when DnaX is not beside AnnoTape.
 
-For a checkout elsewhere, pass an absolute `CupriFaceRoot` MSBuild property. Build an installable release APK with:
+Build an installable release APK with:
 
 ```powershell
-dotnet publish src\AnnoTape.Android\AnnoTape.Android.csproj -c Release -r android-arm64 -p:CupriFaceRoot=C:\path\to\CupriFace
+dotnet publish src\AnnoTape.Android\AnnoTape.Android.csproj -c Release -r android-arm64
 ```
 
 The APK is written below `src\AnnoTape.Android\bin\Release\net10.0-android\android-arm64\publish\`. Debug deployment and attach tasks are included in `.vscode`.

@@ -20,7 +20,6 @@ public sealed class MainActivity : CupriActivity
 {
     private AndroidPlatformCapabilities? _capabilities;
     private AnnoTapeApp? _app;
-    private bool _recreatingAfterPhotoFlow;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
@@ -40,13 +39,6 @@ public sealed class MainActivity : CupriActivity
             else
                 global::Android.Util.Log.Info("annotape", "Background startup completed.");
         }, TaskScheduler.Default);
-        _app.ExternalPhotoFlowCompleted += () => RunOnUiThread(() =>
-        {
-            if (IsFinishing || IsDestroyed) return;
-            _recreatingAfterPhotoFlow = true;
-            global::Android.Util.Log.Info("annotape", "Recreating Activity after completed photo flow.");
-            Recreate();
-        });
         return _app;
     }
 
@@ -58,9 +50,7 @@ public sealed class MainActivity : CupriActivity
 
     protected override void OnPause()
     {
-        if (_app is not null && !_recreatingAfterPhotoFlow) _ = _app.FlushAsync();
-        else if (_recreatingAfterPhotoFlow)
-            global::Android.Util.Log.Info("annotape", "Skipping redundant pause flush during photo-flow recreation.");
+        if (_app is not null) _ = _app.FlushAsync();
         base.OnPause();
     }
 

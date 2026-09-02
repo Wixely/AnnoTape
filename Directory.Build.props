@@ -6,7 +6,5 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
-    <CupriFaceRoot Condition="'$(CupriFaceRoot)' == ''">$(MSBuildThisFileDirectory)..\CupriFace</CupriFaceRoot>
   </PropertyGroup>
 </Project>
-

@@ -5,12 +5,10 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../AnnoTape.Core/AnnoTape.Core.csproj" />
-    <ProjectReference Include="$(CupriFaceRoot)/src/CupriFace/CupriFace.csproj" />
-    <ProjectReference Include="$(CupriFaceRoot)/src/CupriFace.Binding.Gen/CupriFace.Binding.Gen.csproj"
-                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="$(CupriFaceRoot)/src/CupriFace.Resources.Gen/CupriFace.Resources.Gen.csproj"
-                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <PackageReference Include="CupriFace" />
   </ItemGroup>
-  <Import Project="$(CupriFaceRoot)/src/CupriFace.Resources.targets" />
+  <ItemGroup>
+    <EmbeddedResource Include="Assets/AnnoTape.html" LogicalName="AnnoTape.App.Assets.AnnoTape.html" />
+    <EmbeddedResource Include="Assets/AnnoTape.css" LogicalName="AnnoTape.App.Assets.AnnoTape.css" />
+  </ItemGroup>
 </Project>
-

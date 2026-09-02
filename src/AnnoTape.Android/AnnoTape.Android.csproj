@@ -20,9 +20,9 @@
   <ItemGroup>
     <ProjectReference Include="../AnnoTape.App/AnnoTape.App.csproj" />
     <ProjectReference Include="../AnnoTape.Core/AnnoTape.Core.csproj" />
-    <ProjectReference Include="$(CupriFaceRoot)/src/CupriFace.Android/CupriFace.Android.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="CupriFace.Android" />
     <PackageReference Include="Xamarin.AndroidX.Core" />
   </ItemGroup>
   <ItemGroup>

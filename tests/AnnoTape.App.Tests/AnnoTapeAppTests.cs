@@ -2,6 +2,8 @@ using AnnoTape.App;
 using AnnoTape.App.Platform;
 using AnnoTape.App.Editor;
 using AnnoTape.Core.Models;
+using CupriFace.Dom;
+using CupriFace.Interaction;
 
 namespace AnnoTape.App.Tests;
 
@@ -35,6 +37,33 @@ public sealed class AnnoTapeAppTests
         Assert.AreEqual(800, image.Height);
         Assert.Contains("AnnoTape", app.Html);
         Assert.Contains("no inferred measurements", app.Html);
+        Assert.Contains("<cupri-toolbar", app.Html);
+        Assert.Contains("<cupri-shelf", app.Html);
+    }
+
+    [TestMethod]
+    public async Task ExportButtonOpensTheCupriFaceShelf()
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        model.Page = "editor";
+        model.ImageSource = "test-photo.png";
+
+        using var document = app.CreateDocument();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+        var exportButton = Find(document.Root, node => node.Element?.ClassList.Contains("open-export") == true);
+        Assert.IsNotNull(exportButton);
+
+        var box = HitTesting.ScreenBox(exportButton);
+        document.DispatchClick(box.X + box.W / 2, box.Y + box.H / 2);
+        using var image = document.RenderToImage(400, 800, app.Background);
+
+        Assert.IsNull(app.InitializationError);
+        Assert.AreEqual(400, image.Width);
+        Assert.AreEqual(800, image.Height);
+        Assert.IsTrue(model.ExportShelfOpen);
+        Assert.IsNotNull(Find(document.Root, node => node.Element?.ClassList.Contains("cupri-shelf-panel") == true));
     }
 
     [TestMethod]
@@ -46,6 +75,35 @@ public sealed class AnnoTapeAppTests
         Assert.Contains("left:-2.5%", view.LineStyle);
         Assert.Contains("top:50%", view.LineStyle);
         Assert.Contains("rotate(90deg)", view.LineStyle);
+        Assert.Contains("width:80px", view.LabelStyle);
+        Assert.Contains("margin-left:-40px", view.LabelStyle);
+    }
+
+    [TestMethod]
+    public void EmptyEditorHidesUnavailableToolsAndUsesTheCompactDock()
+    {
+        var model = new EditorViewModel();
+
+        Assert.AreEqual("none", model.ToolsDisplay);
+        Assert.AreEqual("none", model.SelectionSummaryDisplay);
+        Assert.AreEqual("inspector empty-project", model.InspectorClass);
+
+        model.ImageSource = "photo.jpg";
+
+        Assert.AreEqual("flex", model.ToolsDisplay);
+        Assert.AreEqual("block", model.SelectionSummaryDisplay);
+        Assert.AreEqual("inspector", model.InspectorClass);
+    }
+
+    private static RenderNode? Find(RenderNode node, Func<RenderNode, bool> match)
+    {
+        if (match(node)) return node;
+        foreach (var child in node.Children)
+        {
+            if (Find(child, match) is { } found) return found;
+        }
+
+        return null;
     }
 
     private sealed class FakePlatform(string appDataPath) : IPlatformCapabilities

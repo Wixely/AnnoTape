@@ -15,13 +15,6 @@ jobs:
       - name: Check out AnnoTape
         uses: actions/checkout@v4
 
-      - name: Check out pinned CupriFace
-        uses: actions/checkout@v4
-        with:
-          repository: Wixely/CupriFace
-          ref: c5a2cc7c939e5a78c10f3d82321698fa37be3d71
-          path: external/CupriFace
-
       - name: Check out pinned DnaX
         uses: actions/checkout@v4
         with:
@@ -42,17 +35,21 @@ jobs:
         shell: powershell
         run: .\eng\Prepare-DnaXPackages.ps1 -DnaXRoot .\external\DnaX
 
+      - name: Prepare pinned CupriFace packages
+        shell: powershell
+        run: .\eng\Prepare-CupriFacePackages.ps1
+
       - name: Test core
         shell: powershell
-        run: dotnet test tests\AnnoTape.Core.Tests\AnnoTape.Core.Tests.csproj -c Release -p:CupriFaceRoot="$env:GITHUB_WORKSPACE\external\CupriFace"
+        run: dotnet test tests\AnnoTape.Core.Tests\AnnoTape.Core.Tests.csproj -c Release
 
       - name: Test portable UI
         shell: powershell
-        run: dotnet test tests\AnnoTape.App.Tests\AnnoTape.App.Tests.csproj -c Release -p:CupriFaceRoot="$env:GITHUB_WORKSPACE\external\CupriFace"
+        run: dotnet test tests\AnnoTape.App.Tests\AnnoTape.App.Tests.csproj -c Release
 
       - name: Publish APK
         shell: powershell
-        run: dotnet publish src\AnnoTape.Android\AnnoTape.Android.csproj -c Release -r android-arm64 -p:CupriFaceRoot="$env:GITHUB_WORKSPACE\external\CupriFace"
+        run: dotnet publish src\AnnoTape.Android\AnnoTape.Android.csproj -c Release -r android-arm64
 
       - name: Verify package identity and permissions
         shell: powershell

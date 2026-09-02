@@ -9,8 +9,10 @@ namespace AnnoTape.App.Editor;
 [CupriBindable]
 public sealed partial class EditorViewModel
 {
-    private const double HeaderHeight = 64;
-    private const double InspectorHeight = 238;
+    private const double HeaderHeight = 60;
+    private const double EmptyInspectorHeight = 96;
+    private const double CompactInspectorHeight = 148;
+    private const double SelectionInspectorHeight = 296;
 
     public string Page { get; set; } = "home";
     public string HomeDisplay => Page == "home" ? "flex" : "none";
@@ -23,16 +25,24 @@ public sealed partial class EditorViewModel
     public string EmptyDisplay => ImageSource.Length == 0 ? "flex" : "none";
     public string ImageDisplay => ImageSource.Length == 0 ? "none" : "block";
     public bool AddMode { get; set; }
-    public string AddButtonClass => AddMode ? "tool active" : "tool";
+    public string AddButtonClass => AddMode ? "add-measurement active" : "add-measurement";
+    public string AddButtonLabel => AddMode ? "Drawing…" : "Add";
+    public bool ExportShelfOpen { get; set; }
     public string MeasurementText { get; set; } = "1000";
     public string MeasurementLabel { get; set; } = "";
     public string UnitName { get; set; } = nameof(MeasurementUnit.Millimetres);
+    public bool UnitOpen { get; set; }
     public string RecentSummary { get; set; } = "No saved projects yet.";
     public List<RecentProjectViewModel> RecentProjects { get; set; } = [];
     public string SelectionSummary { get; set; } = "No measurement selected";
     public string SaveState { get; set; } = "Saved";
     public bool HasSelection { get; set; }
     public string InspectorDisplay => HasSelection ? "flex" : "none";
+    public string InspectorClass => HasSelection
+        ? "inspector has-selection"
+        : ImageSource.Length == 0 ? "inspector empty-project" : "inspector";
+    public string ToolsDisplay => ImageSource.Length == 0 ? "none" : "flex";
+    public string SelectionSummaryDisplay => ImageSource.Length == 0 ? "none" : "block";
     public double ViewportWidth { get; set; } = 400;
     public double ViewportHeight { get; set; } = 800;
     public double SourceWidth { get; set; } = 1;
@@ -42,7 +52,11 @@ public sealed partial class EditorViewModel
     public double PanY { get; set; }
     public List<AnnotationViewModel> AnnotationViews { get; set; } = [];
 
-    public PixelRect StageRect => new(0, HeaderHeight, ViewportWidth, Math.Max(80, ViewportHeight - HeaderHeight - InspectorHeight));
+    public PixelRect StageRect => new(0, HeaderHeight, ViewportWidth,
+        Math.Max(80, ViewportHeight - HeaderHeight - InspectorHeight));
+    private double InspectorHeight => HasSelection
+        ? SelectionInspectorHeight
+        : ImageSource.Length == 0 ? EmptyInspectorHeight : CompactInspectorHeight;
     public PixelRect BaseImageRect => ImageGeometry.FitContain(SourceWidth, SourceHeight, StageRect);
     public string ImageFrameStyle
     {
@@ -102,6 +116,7 @@ public sealed class AnnotationViewModel
         var caption = string.IsNullOrWhiteSpace(annotation.Label)
             ? $"{annotation.DisplayText} {suffix}"
             : $"{annotation.Label}: {annotation.DisplayText} {suffix}";
+        var labelWidth = Math.Clamp(24 + caption.Length * 8, 72, 240);
         return new()
         {
             Id = annotation.Id.ToString("D"),
@@ -109,7 +124,7 @@ public sealed class AnnotationViewModel
             LineStyle = $"left:{Percent(lineLeft)};top:{Percent(midpointY)};width:{widthPercent.ToString("0.###", c)}%;transform:rotate({angle.ToString("0.###", c)}deg)",
             StartStyle = $"left:{Percent(annotation.Start.X)};top:{Percent(annotation.Start.Y)}",
             EndStyle = $"left:{Percent(annotation.End.X)};top:{Percent(annotation.End.Y)}",
-            LabelStyle = $"left:{Percent(annotation.LabelAnchor.X)};top:{Percent(annotation.LabelAnchor.Y)}",
+            LabelStyle = $"left:{Percent(annotation.LabelAnchor.X)};top:{Percent(annotation.LabelAnchor.Y)};width:{labelWidth}px;margin-left:{-labelWidth / 2d}px",
             Caption = caption
         };
     }

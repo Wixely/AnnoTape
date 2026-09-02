@@ -112,7 +112,7 @@ public sealed class DebouncedAutosave(ProjectRepository repository, TimeSpan del
     private CancellationTokenSource? _pending;
     private Task _saveTask = Task.CompletedTask;
 
-    public void Schedule(AnnoProject project)
+    public Task Schedule(AnnoProject project)
     {
         lock (_gate)
         {
@@ -121,6 +121,7 @@ public sealed class DebouncedAutosave(ProjectRepository repository, TimeSpan del
             _pending = new CancellationTokenSource();
             var token = _pending.Token;
             _saveTask = SaveAfterDelayAsync(project, token);
+            return _saveTask;
         }
     }
 

@@ -14,7 +14,6 @@ namespace AnnoTape.App;
 
 public sealed class AnnoTapeApp : CupriApp
 {
-    public event Action? ExternalPhotoFlowCompleted;
     private readonly IPlatformCapabilities _platform;
     private readonly EditorViewModel _model = new();
     private readonly ProjectRepository _repository;
@@ -34,6 +33,7 @@ public sealed class AnnoTapeApp : CupriApp
     private double _gestureBasePanY;
     private double _gestureBaseDistance;
     private int _refreshRequested;
+    private int _saveGeneration;
 
     public AnnoTapeApp(IPlatformCapabilities platform)
     {
@@ -57,12 +57,14 @@ public sealed class AnnoTapeApp : CupriApp
     public Task Initialization => _initialization;
     public Exception? InitializationError { get; private set; }
 
-    protected override CupriSource MarkupSource => Assets.AnnoTape.Html;
-    protected override CupriSource StyleSource => Assets.AnnoTape.Css;
+    protected override CupriSource MarkupSource =>
+        CupriSource.Embedded<AnnoTapeApp>("AnnoTape.App.Assets.AnnoTape.html");
+    protected override CupriSource StyleSource =>
+        CupriSource.Embedded<AnnoTapeApp>("AnnoTape.App.Assets.AnnoTape.css");
     public override string Title => "AnnoTape";
     public override int Width => 400;
     public override int Height => 800;
-    public override SKColor Background => new(0x10, 0x12, 0x16);
+    public override SKColor Background => new(0x05, 0x05, 0x06);
     public override object Model => _model;
     public override double RefreshIntervalSeconds => 0.1;
 
@@ -77,11 +79,6 @@ public sealed class AnnoTapeApp : CupriApp
     public override void Configure(CupriDocument document)
     {
         _document = document;
-        document.OnClick(".new-project", _ => RunDetached(async () =>
-        {
-            await EnsureInitializedAsync();
-            NewProject();
-        }));
         document.OnClick(".pick-photo", _ => RunDetached(() => ImportAsync(camera: false)));
         document.OnClick(".take-photo", _ => RunDetached(() => ImportAsync(camera: true)));
         document.OnClick(".back-home", _ => RunDetached(async () =>
@@ -95,12 +92,11 @@ public sealed class AnnoTapeApp : CupriApp
         document.OnClick(".add-measurement", _ => { _model.AddMode = !_model.AddMode; _model.Status = _model.AddMode ? "Drag across the photo" : "Navigate mode"; });
         document.OnClick(".save-value", _ => SaveSelectedValue());
         document.OnClick(".delete-measurement", _ => DeleteSelected());
-        document.OnClick(".duplicate-measurement", _ => DuplicateSelected());
-        document.OnClick(".recolour-measurement", _ => RecolourSelected());
         document.OnClick(".undo", _ => { if (CurrentDocument is { } photo && _history.Undo(photo)) Changed(); });
         document.OnClick(".redo", _ => { if (CurrentDocument is { } photo && _history.Redo(photo)) Changed(); });
-        document.OnClick(".export-png", _ => RunDetached(() => ExportAsync(ExportFormat.Png)));
-        document.OnClick(".export-jpeg", _ => RunDetached(() => ExportAsync(ExportFormat.Jpeg)));
+        document.OnClick(".open-export", _ => { _model.ExportShelfOpen = true; ScheduleRefresh(); });
+        document.OnClick(".export-png", _ => ExportFromShelf(ExportFormat.Png));
+        document.OnClick(".export-jpeg", _ => ExportFromShelf(ExportFormat.Jpeg));
         document.OnAction("data-select", e => { Select(Guid.Parse(e.Value)); return true; });
         document.OnAction("data-open-project", e =>
         {
@@ -160,8 +156,6 @@ public sealed class AnnoTapeApp : CupriApp
         finally
         {
             ScheduleRefresh();
-            _storage.WriteHostRestartProject(_project.Id);
-            ExternalPhotoFlowCompleted?.Invoke();
         }
     }
 
@@ -387,8 +381,18 @@ public sealed class AnnoTapeApp : CupriApp
     {
         SyncProjectDetails();
         _model.SaveState = "Saving…";
-        _autosave?.Schedule(_project);
-        _model.SaveState = "Autosave queued";
+        var generation = Interlocked.Increment(ref _saveGeneration);
+        if (_autosave?.Schedule(_project) is { } saveTask)
+        {
+            _model.SaveState = "Queued";
+            RunDetached(async () =>
+            {
+                await saveTask;
+                if (generation != Volatile.Read(ref _saveGeneration)) return;
+                _model.SaveState = "Saved";
+                ScheduleRefresh();
+            });
+        }
         RebuildAnnotations();
     }
 
@@ -421,6 +425,13 @@ public sealed class AnnoTapeApp : CupriApp
             _model.Status = $"Export failed: {exception.Message}";
         }
         finally { ScheduleRefresh(); }
+    }
+
+    private void ExportFromShelf(ExportFormat format)
+    {
+        _model.ExportShelfOpen = false;
+        ScheduleRefresh();
+        RunDetached(() => ExportAsync(format));
     }
 
     private async Task LoadRecentAsync()
