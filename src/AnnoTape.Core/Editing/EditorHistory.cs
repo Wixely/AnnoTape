@@ -76,3 +76,23 @@ public sealed class ReplaceAnnotationCommand(DimensionAnnotation before, Dimensi
     }
 }
 
+public sealed class ReplaceAnnotationsCommand(
+    IReadOnlyList<DimensionAnnotation> before,
+    IReadOnlyList<DimensionAnnotation> after) : IEditorCommand
+{
+    private readonly DimensionAnnotation[] _before = before.Select(item => item.Copy()).ToArray();
+    private readonly DimensionAnnotation[] _after = after.Select(item => item.Copy()).ToArray();
+    public string Description => "Edit all measurements";
+    public void Execute(PhotoDocument document) => Replace(document, _after);
+    public void Undo(PhotoDocument document) => Replace(document, _before);
+
+    private static void Replace(PhotoDocument document, IReadOnlyList<DimensionAnnotation> replacements)
+    {
+        foreach (var replacement in replacements)
+        {
+            var index = document.Annotations.FindIndex(item => item.Id == replacement.Id);
+            if (index < 0) throw new InvalidOperationException("An annotation no longer exists.");
+            document.Annotations[index] = replacement.Copy();
+        }
+    }
+}

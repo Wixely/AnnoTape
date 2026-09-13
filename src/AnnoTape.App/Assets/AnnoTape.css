@@ -4,23 +4,24 @@ body {
   --cupri-accent:#e32636; --cupri-surface:#111115; --cupri-border:#34343c;
   --cupri-text:#f7f3f4; --cupri-muted:#9f989b; --cupri-hover:#251014;
 }
-.app { width:100%; height:100%; min-height:100vh; background:#050506; }
+.app { width:100%; min-height:100vh; background:#050506; }
 
 /* Home */
-.home { min-height:100vh; flex-direction:column; padding:24px 18px 16px; gap:18px; }
+.home { min-height:100vh; flex-direction:column; align-items:center; padding:24px 18px 16px; gap:18px; }
+.home > .brand,.home > .hero,.home > .recent,.home > .privacy { width:100%; max-width:520px; }
 .brand { display:flex; align-items:center; justify-content:center; gap:13px; }
 .brand h1 { margin:0; font-size:27px; line-height:1; }
 .brand span { color:#9f989b; font-size:12px; }
 .mark {
   width:48px; height:48px; border-radius:13px; background:#e32636; color:#fff !important;
-  display:flex; align-items:center; justify-content:center; font-size:16px !important; font-weight:bold; letter-spacing:1px;
+  display:flex; align-items:center; justify-content:center; font-size:16px !important; font-weight:bold;
   box-shadow:0 8px 24px #e3263640;
 }
 .hero {
   display:flex; flex-direction:column; align-items:stretch; gap:11px; padding:22px 18px; border-radius:18px;
   background:#0d0d10; border:1px solid #3b171c; box-shadow:0 14px 32px #00000066;
 }
-.eyebrow { color:#ff4656; font-size:10px; font-weight:bold; letter-spacing:1.4px; text-align:center; }
+.eyebrow { color:#ff4656; font-size:10px; font-weight:bold; text-align:center; }
 .hero h2 { margin:0; font-size:30px; line-height:1.08; text-align:center; }
 .hero p { color:#aaa3a5; line-height:1.42; margin:0 0 7px; text-align:center; }
 cupri-button { min-height:48px; }
@@ -31,25 +32,25 @@ cupri-button { min-height:48px; }
   background:#0b0b0e; border:1px solid #242429;
 }
 .section-title { display:flex; align-items:center; justify-content:space-between; }
-.section-title span { color:#e32636 !important; font-size:9px !important; font-weight:bold; letter-spacing:1px; white-space:nowrap; }
+.section-title span { color:#e32636 !important; font-size:9px !important; font-weight:bold; white-space:nowrap; }
 .recent > span { text-align:center; }
 .recent-row {
   min-height:50px; display:flex; flex-direction:column; justify-content:center; padding:8px 11px;
-  border-radius:9px; background:#151519; border-left:3px solid #e32636;
+  border-radius:9px; background:#151519; border:1px solid #4b1a20;
 }
 .recent span,.privacy { color:#969093; font-size:12px; }
 .privacy { margin-top:auto; text-align:center; }
 
 /* Editor */
-.editor { position:relative; width:100%; height:100vh; flex-direction:column; background:#050506; }
+.editor { position:relative; width:100%; height:100vh; flex-direction:column; overflow:scroll; background:#050506; }
 header {
   height:60px; min-height:60px; display:flex; align-items:center; gap:8px; padding:7px 8px;
-  background:#09090b; border-bottom:2px solid #e32636;
+  background:#09090b; box-shadow:0 2px 0 #e32636;
 }
 .title { flex:1; min-width:80px; }
 header .cupri-textfield { background:#111115; border-color:#2c2c33; }
 .save-state { font-size:10px; color:#d7cfd1; width:52px; text-align:right; white-space:nowrap; }
-.stage { position:relative; flex:1; min-height:80px; background:#020203; overflow:hidden; touch-action:none; }
+.stage { position:relative; flex:1; min-height:80px; background:#020203; overflow:hidden; }
 .empty {
   position:absolute; left:0; top:0; width:100%; height:100%; padding:24px; flex-direction:column;
   align-items:center; justify-content:center; gap:7px; color:#aaa3a5; text-align:center;
@@ -60,24 +61,34 @@ header .cupri-textfield { background:#111115; border-color:#2c2c33; }
 .empty-actions .cupri-button { display:flex; align-items:center; justify-content:center; text-align:center; }
 .image-frame { position:absolute; transform-origin:center center; }
 .photo { position:absolute; left:0; top:0; width:100%; height:100%; }
-.annotation { position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; color:#e32636; }
-.annotation.style-white { color:#fff; }.annotation.style-black { color:#111; }.annotation.style-yellow { color:#ffd60a; }.annotation.style-red { color:#ff3347; }
-.dimension-line { position:absolute; height:4px; margin-top:-2px; transform-origin:left center; background:currentColor; pointer-events:auto; box-shadow:0 1px 3px #000; }
-.dimension-line:before,.dimension-line:after { content:""; position:absolute; top:-6px; width:14px; height:14px; border-top:3px solid currentColor; border-left:3px solid currentColor; }
-.dimension-line:before { left:0; transform:rotate(-45deg); }.dimension-line:after { right:0; transform:rotate(135deg); }
-.handle { position:absolute; width:44px; height:44px; margin:-22px; border-radius:22px; pointer-events:auto; background:#e3263626; border:2px solid currentColor; }
-.annotation:not(.selected) .handle { background:transparent; border-color:transparent; }
-.measure-label { position:absolute; min-height:40px; min-width:40px; margin-left:-20px; margin-top:-20px; padding:8px 10px; border-radius:9px; pointer-events:auto; background:#09090bee; color:currentColor; font-weight:bold; white-space:nowrap; border:1px solid currentColor; }
+.dimension-line { position:absolute; height:4px; margin-top:-2px; transform-origin:left center; background:#b87333; box-shadow:0 1px 3px #000; }
+.line-cap { position:absolute; top:-6px; width:3px; height:16px; background:#b87333; }
+.line-cap-start { left:0; }.line-cap-end { right:0; }
+.handle { position:absolute; width:44px; height:44px; transform:translate(-22px,-22px); border-radius:22px; background:transparent; }
+.handle-marker {
+  position:absolute; left:13px; top:13px; width:18px; height:18px; border-radius:9px;
+  background:#b87333; border:2px solid #09090b; box-shadow:0 1px 5px #000;
+}
+.measure-label { position:absolute; min-height:44px; min-width:44px; padding:9px 12px; border-radius:9px; background:#09090bee; color:#b87333; font-weight:bold; white-space:nowrap; border:1px solid #b87333; }
+.dimension-line.selected { box-shadow:0 0 0 2px #fff,0 0 12px #fff; }
+.measure-label.selected { box-shadow:0 0 0 2px #fff,0 0 12px #fff; }
 
 /* Compact editor dock */
 .inspector {
-  height:148px; min-height:148px; display:flex; flex-direction:column; gap:6px; padding:8px;
-  background:#0b0b0e; border-top:2px solid #e32636; box-shadow:0 -10px 28px #0000008c;
+  height:198px; min-height:198px; display:flex; flex-direction:column; gap:6px; padding:8px;
+  background:#0b0b0e; box-shadow:0 -2px 0 #e32636, 0 -10px 28px #0000008c;
 }
 .inspector.empty-project { height:96px; min-height:96px; }
-.inspector.has-selection { height:296px; min-height:296px; }
-.tools,.selection,.selection-label,.selection-value,.selection-actions,.status-row { display:flex; align-items:center; gap:6px; }
+.inspector.has-selection { height:346px; min-height:346px; }
+.tools,.draw-options,.snap-option,.selection,.selection-label,.selection-value,.selection-actions,.status-row { display:flex; align-items:center; gap:6px; }
 .tools { width:100%; }
+.draw-options { width:100%; min-height:44px; }
+.snap-option { flex:none; min-width:82px; color:#d8d1d3; font-size:12px; }
+.snap-option span { flex:1; }
+.global-unit { flex:0.7; width:0; min-width:0; }
+.global-unit .cupri-select-trigger { width:100%; min-width:0; min-height:40px; padding:7px 9px; }
+.line-colour { flex:1; width:0; min-width:0; }
+.line-colour .cupri-color-trigger { width:100%; min-width:0; min-height:40px; padding:7px 10px; background:#111115; border-color:#34343c; }
 .selection { width:100%; flex-direction:column; align-items:stretch; }
 .selection-label,.selection-value,.selection-actions { width:100%; }
 .details { display:flex; gap:6px; }.details cupri-textfield { flex:1; min-width:80px; }
@@ -95,7 +106,7 @@ header .cupri-textfield { background:#111115; border-color:#2c2c33; }
 }
 .tools .cupri-toolbar-group { min-width:0; gap:4px; }
 .tools .history-tools { flex:1; }
-.tools .cupri-toolbar-sep { margin:3px 0; background:#45171d; }
+.tools .tool-divider { width:1px; height:28px; margin:3px 0; background:#45171d; }
 .tools .cupri-button {
   min-width:0; min-height:38px; padding:8px 10px; border-radius:8px; display:flex;
   align-items:center; justify-content:center; font-size:11px; text-align:center; white-space:nowrap; box-shadow:none;
@@ -104,17 +115,19 @@ header .cupri-textfield { background:#111115; border-color:#2c2c33; }
 .tools .add-measurement.active { background:#ff3347; border-color:#ff6673; box-shadow:0 0 0 2px #ff334733; }
 .tools .history-tools .cupri-button { flex:1; background:#17171c; border:1px solid #303038; color:#d8d1d3; }
 .tools .open-export { background:#220b0f; border:1px solid #651b25; color:#ff5967; }
-.label-input { flex:1; width:0; min-width:0; }.value-input { flex:1; width:0; min-width:0; }.unit-input { flex:1; width:0; min-width:0; }
+.label-input { flex:1; width:0; min-width:0; }.value-input { flex:1; width:0; min-width:0; }
+.selection-label .cupri-textfield,.selection-value .cupri-textfield,.selection-value .cupri-select-trigger { min-height:44px; }
 .unit-input .cupri-select-trigger { width:100%; min-width:0; }
 .selection-actions .cupri-button { min-height:42px; display:flex; align-items:center; justify-content:center; font-size:12px; text-align:center; }
 .selection-actions .save-value { flex:1.6; background:#e32636; border:1px solid #e32636; color:#fff; }
+.selection-actions .center-label { flex:1; min-width:0; background:#17171c; border:1px solid #3a3a43; color:#d8d1d3; }
 .selection-actions .delete-measurement { flex:1; background:#210a0e; border:1px solid #5b1821; color:#ff6673; }
 .status-row { min-width:0; margin-top:auto; }
 .status,.selection-summary { color:#8f898c; font-size:10px; white-space:nowrap; overflow:hidden; }
-.status { flex:1.4; }.selection-summary { flex:1; text-align:right; }
+.status { flex:1; min-width:0; }.selection-summary { flex:none; text-align:right; }
 
 /* Export bottom sheet uses CupriFace's shelf overlay. */
-.export-shelf .cupri-shelf-panel { background:#0d0d10; border-top:1px solid #521820; box-shadow:0 -18px 48px #000000cc; }
+.export-shelf .cupri-shelf-panel { background:#0d0d10; box-shadow:0 -1px 0 #521820, 0 -18px 48px #000000cc; }
 .export-shelf .cupri-shelf-inner { padding:14px 18px 24px; }
 .export-shelf .cupri-shelf-griprow { margin-bottom:12px; }
 .export-shelf .cupri-shelf-grip { background:#5b3035; }

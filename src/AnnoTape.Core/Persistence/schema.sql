@@ -33,13 +33,14 @@ CREATE TABLE dimension_annotations (
     end_y REAL NOT NULL,
     label_x REAL NOT NULL,
     label_y REAL NOT NULL,
+    label_centered INTEGER NOT NULL DEFAULT 0,
     display_text TEXT NOT NULL,
     normalized_millimetres TEXT NOT NULL,
     unit INTEGER NOT NULL,
     precision INTEGER NULL,
     label TEXT NULL,
     style INTEGER NOT NULL,
+    colour_hex TEXT NOT NULL DEFAULT '#B87333',
     created_utc TEXT NOT NULL,
     modified_utc TEXT NOT NULL
 );
-

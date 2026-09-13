@@ -34,12 +34,10 @@
         </div>
         <div class="image-frame" style="{{ImageFrameStyle}}">
           <cupri-image class="photo" src="{{ImageSource}}" fit="fill" aria-label="Source photo"></cupri-image>
-          <div class="{{ClassName}}" data-repeat="AnnotationViews">
-            <div class="dimension-line" style="{{LineStyle}}" data-select="{{Id}}"></div>
-            <div class="handle start" style="{{StartStyle}}" data-drag="start:{{Id}}" role="button" aria-label="Move first endpoint"></div>
-            <div class="handle end" style="{{EndStyle}}" data-drag="end:{{Id}}" role="button" aria-label="Move second endpoint"></div>
-            <div class="measure-label" style="{{LabelStyle}}" data-drag="label:{{Id}}" role="button" aria-label="Move measurement label">{{Caption}}</div>
-          </div>
+          <div class="{{LineClass}}" style="{{LineStyle}}" data-repeat="AnnotationViews" data-select="{{Id}}"><div class="line-cap line-cap-start" style="{{ColourStyle}}" data-select="{{Id}}"></div><div class="line-cap line-cap-end" style="{{ColourStyle}}" data-select="{{Id}}"></div></div>
+          <div class="handle start" style="{{StartStyle}}" data-repeat="AnnotationViews" data-drag="start:{{Id}}" role="button" aria-label="Move first endpoint"><div class="handle-marker" style="{{MarkerStyle}}" data-drag="start:{{Id}}"></div></div>
+          <div class="handle end" style="{{EndStyle}}" data-repeat="AnnotationViews" data-drag="end:{{Id}}" role="button" aria-label="Move second endpoint"><div class="handle-marker" style="{{MarkerStyle}}" data-drag="end:{{Id}}"></div></div>
+          <div class="{{LabelClass}}" style="{{LabelStyle}}" data-repeat="AnnotationViews" data-drag="label:{{Id}}" role="button" aria-label="Move measurement label">{{Caption}}</div>
         </div>
       </div>
 
@@ -48,7 +46,7 @@
           <cupri-toolbar-group class="measure-tools">
             <cupri-button class="{{AddButtonClass}}" aria-label="Add measurement" aria-pressed="{{AddMode}}">{{AddButtonLabel}}</cupri-button>
           </cupri-toolbar-group>
-          <cupri-toolbar-sep></cupri-toolbar-sep>
+          <div class="tool-divider" aria-hidden="true"></div>
           <cupri-toolbar-group class="history-tools">
             <cupri-button class="undo" variant="ghost" aria-label="Undo last edit">Undo</cupri-button>
             <cupri-button class="redo" variant="ghost" aria-label="Redo last edit">Redo</cupri-button>
@@ -57,19 +55,24 @@
             <cupri-button class="open-export" variant="ghost" aria-label="Export annotated image">Export</cupri-button>
           </cupri-toolbar-group>
         </cupri-toolbar>
+        <div class="draw-options" style="display:{{ToolsDisplay}}">
+          <div class="snap-option"><span>Snap</span><cupri-switch class="snap-toggle" checked="{{SnapEnabled}}" aria-label="Snap lines to 16 angles"></cupri-switch></div>
+          <cupri-select class="unit-input global-unit" value="{{UnitName}}" open="{{UnitOpen}}" aria-label="Units for all measurements">
+            <cupri-option value="Millimetres">mm</cupri-option><cupri-option value="Centimetres">cm</cupri-option><cupri-option value="Metres">m</cupri-option>
+            <cupri-option value="Inches">inches</cupri-option><cupri-option value="FeetAndInches">feet/inches</cupri-option>
+          </cupri-select>
+          <cupri-color class="line-colour" value="{{LineColour}}" open="{{ColourOpen}}" aria-label="Measurement colour"></cupri-color>
+        </div>
         <div class="selection" style="display:{{InspectorDisplay}}">
           <div class="selection-label">
             <cupri-textfield class="label-input" value="{{MeasurementLabel}}" placeholder="Label (optional)" aria-label="Measurement label"></cupri-textfield>
           </div>
           <div class="selection-value">
             <cupri-textfield class="value-input" value="{{MeasurementText}}" inputmode="decimal" aria-label="Measurement value"></cupri-textfield>
-            <cupri-select class="unit-input" value="{{UnitName}}" open="{{UnitOpen}}" aria-label="Unit">
-              <cupri-option value="Millimetres">mm</cupri-option><cupri-option value="Centimetres">cm</cupri-option><cupri-option value="Metres">m</cupri-option>
-              <cupri-option value="Inches">inches</cupri-option><cupri-option value="FeetAndInches">feet/inches</cupri-option>
-            </cupri-select>
           </div>
           <div class="selection-actions">
             <cupri-button class="save-value" aria-label="Save measurement">Save measurement</cupri-button>
+            <cupri-button class="center-label" variant="ghost" aria-label="Return label to line centre">Center label</cupri-button>
             <cupri-button class="danger delete-measurement" variant="ghost" aria-label="Delete measurement">Delete</cupri-button>
           </div>
         </div>

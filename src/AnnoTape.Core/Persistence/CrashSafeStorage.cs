@@ -9,7 +9,6 @@ public sealed class CrashSafeStorage(string rootPath)
     private string MediaPath => Path.Combine(_rootPath, "media");
     private string StagingPath => Path.Combine(_rootPath, "staging");
     private string PendingPath => Path.Combine(_rootPath, "pending-operation.json");
-    private string HostRestartPath => Path.Combine(_rootPath, "host-restart-project.txt");
 
     public void Initialize()
     {
@@ -61,26 +60,6 @@ public sealed class CrashSafeStorage(string rootPath)
     public void ClearPending()
     {
         if (File.Exists(PendingPath)) File.Delete(PendingPath);
-    }
-
-    public void WriteHostRestartProject(Guid projectId)
-    {
-        var temporary = $"{HostRestartPath}.{Guid.NewGuid():N}.tmp";
-        File.WriteAllText(temporary, projectId.ToString("D"));
-        File.Move(temporary, HostRestartPath, true);
-    }
-
-    public Guid? TakeHostRestartProject()
-    {
-        if (!File.Exists(HostRestartPath)) return null;
-        try
-        {
-            return Guid.TryParse(File.ReadAllText(HostRestartPath), out var projectId) ? projectId : null;
-        }
-        finally
-        {
-            File.Delete(HostRestartPath);
-        }
     }
 
     public int CleanAbandonedStaging(TimeSpan olderThan)

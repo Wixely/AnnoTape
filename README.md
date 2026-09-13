@@ -1,6 +1,6 @@
 # AnnoTape
 
-AnnoTape is an offline Android measurement notebook. Capture or choose a photo, draw dimension lines over it, enter the real measurements, and export a full-resolution annotated image.
+AnnoTape is an offline Android measurement notebook with a Windows desktop host for development and layout testing. Capture or choose a photo, draw optionally angle-snapped dimension lines over it, choose annotation colours and image-wide units, position attached or free labels, enter the real measurements, and export a full-resolution annotated image.
 
 The entered value is authoritative. AnnoTape does not infer physical dimensions from ordinary photo pixels and never labels pixel-derived values as measurements.
 
@@ -14,7 +14,7 @@ Version 0.1 uses one photo per project. The schema already supports ordered mult
 
 - C# and .NET 10
 - Plain .NET for Android (no MAUI, WebView, JavaScript, or browser shell)
-- [CupriFace](https://github.com/Wixely/CupriFace) `0.13.0`
+- [CupriFace](https://github.com/Wixely/CupriFace) `0.24.0`
 - SQLite with Dapper and DnaX `10.0.0-alpha.2` checksummed migrations
 - SkiaSharp source-resolution export
 - Minimum Android API 24; Android 13+ uses the system photo picker and earlier releases use `ACTION_OPEN_DOCUMENT`
@@ -40,10 +40,13 @@ Then run:
 .\eng\Prepare-CupriFacePackages.ps1
 dotnet test tests\AnnoTape.Core.Tests\AnnoTape.Core.Tests.csproj -c Debug
 dotnet test tests\AnnoTape.App.Tests\AnnoTape.App.Tests.csproj -c Debug
+dotnet build src\AnnoTape.Desktop\AnnoTape.Desktop.csproj -c Debug
 dotnet build src\AnnoTape.Android\AnnoTape.Android.csproj -c Debug
 ```
 
-The preparation scripts populate the ignored repository-local `.packages` feed. DnaX is built from its pinned checkout; CupriFace `0.13.0` is downloaded from its official GitHub release and verified by SHA-256. Pass `-DnaXRoot C:\path\to\DnaX` when DnaX is not beside AnnoTape.
+The preparation scripts populate the ignored repository-local `.packages` feed. DnaX is built from its pinned checkout; CupriFace `0.24.0` is downloaded from its official GitHub release and verified by SHA-256. Pass `-DnaXRoot C:\path\to\DnaX` when DnaX is not beside AnnoTape.
+
+For desktop layout testing, select **Run AnnoTape Desktop (layout testing)** in VS Code's Run and Debug view and press F5. The desktop Camera and Photo picker actions both open a local image picker; exported images open in the registered Windows image application.
 
 Build an installable release APK with:
 
@@ -61,6 +64,7 @@ Projects, untouched source media, annotations, notes, and user-entered locations
 
 - `src/AnnoTape.Core`: geometry, units, commands, migrations, storage, and export
 - `src/AnnoTape.App`: portable CupriFace UI and editor workflow
+- `src/AnnoTape.Desktop`: Windows CupriFace host for interactive layout testing
 - `src/AnnoTape.Android`: camera, picker, Android lifecycle, content URI, and sharing boundary
 - `tests`: core and portable render tests
 - `docs`: architecture, testing, signing, and privacy guidance

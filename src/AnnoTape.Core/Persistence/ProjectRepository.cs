@@ -98,18 +98,19 @@ public sealed class ProjectRepository(string databasePath)
                 await connection.ExecuteAsync(new CommandDefinition(
                     """
                     INSERT INTO dimension_annotations(
-                      id,document_id,ordinal,start_x,start_y,end_x,end_y,label_x,label_y,display_text,
-                      normalized_millimetres,unit,precision,label,style,created_utc,modified_utc)
-                    VALUES(@Id,@DocumentId,@Ordinal,@StartX,@StartY,@EndX,@EndY,@LabelX,@LabelY,@DisplayText,
-                      @NormalizedMillimetres,@Unit,@Precision,@Label,@Style,@CreatedUtc,@ModifiedUtc);
+                      id,document_id,ordinal,start_x,start_y,end_x,end_y,label_x,label_y,label_centered,display_text,
+                      normalized_millimetres,unit,precision,label,style,colour_hex,created_utc,modified_utc)
+                    VALUES(@Id,@DocumentId,@Ordinal,@StartX,@StartY,@EndX,@EndY,@LabelX,@LabelY,@LabelCentered,@DisplayText,
+                      @NormalizedMillimetres,@Unit,@Precision,@Label,@Style,@ColourHex,@CreatedUtc,@ModifiedUtc);
                     """,
                     new
                     {
                         Id = annotation.Id.ToString("D"), DocumentId = document.Id.ToString("D"), Ordinal = annotationIndex,
                         StartX = annotation.Start.X, StartY = annotation.Start.Y, EndX = annotation.End.X, EndY = annotation.End.Y,
-                        LabelX = annotation.LabelAnchor.X, LabelY = annotation.LabelAnchor.Y, annotation.DisplayText,
+                        LabelX = annotation.LabelAnchor.X, LabelY = annotation.LabelAnchor.Y, annotation.LabelCentered, annotation.DisplayText,
                         NormalizedMillimetres = annotation.NormalizedMillimetres.ToString(CultureInfo.InvariantCulture),
                         Unit = (int)annotation.Unit, annotation.Precision, annotation.Label, Style = (int)annotation.Style,
+                        ColourHex = AnnotationColours.Normalize(annotation.ColourHex, annotation.Style),
                         CreatedUtc = Format(annotation.CreatedUtc), ModifiedUtc = Format(annotation.ModifiedUtc)
                     }, transaction, cancellationToken: cancellationToken));
             }
@@ -215,10 +216,11 @@ public sealed class ProjectRepository(string databasePath)
     private static DimensionAnnotation Map(AnnotationRow row) => new()
     {
         Id = Guid.Parse(row.Id), Start = new(row.Start_X, row.Start_Y), End = new(row.End_X, row.End_Y),
-        LabelAnchor = new(row.Label_X, row.Label_Y), DisplayText = row.Display_Text,
+        LabelAnchor = new(row.Label_X, row.Label_Y), LabelCentered = row.Label_Centered, DisplayText = row.Display_Text,
         NormalizedMillimetres = decimal.Parse(row.Normalized_Millimetres, CultureInfo.InvariantCulture),
         Unit = (MeasurementUnit)row.Unit, Precision = row.Precision is null ? null : checked((int)row.Precision.Value), Label = row.Label,
-        Style = (AnnotationStyle)row.Style, CreatedUtc = Parse(row.Created_Utc), ModifiedUtc = Parse(row.Modified_Utc)
+        Style = (AnnotationStyle)row.Style, ColourHex = AnnotationColours.Normalize(row.Colour_Hex, (AnnotationStyle)row.Style),
+        CreatedUtc = Parse(row.Created_Utc), ModifiedUtc = Parse(row.Modified_Utc)
     };
 
     private static string Format(DateTimeOffset value) => value.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
@@ -261,12 +263,14 @@ public sealed class ProjectRepository(string databasePath)
         public double End_Y { get; set; }
         public double Label_X { get; set; }
         public double Label_Y { get; set; }
+        public bool Label_Centered { get; set; }
         public string Display_Text { get; set; } = "";
         public string Normalized_Millimetres { get; set; } = "";
         public long Unit { get; set; }
         public long? Precision { get; set; }
         public string? Label { get; set; }
         public long Style { get; set; }
+        public string Colour_Hex { get; set; } = AnnotationColours.Copper;
         public string Created_Utc { get; set; } = "";
         public string Modified_Utc { get; set; } = "";
     }

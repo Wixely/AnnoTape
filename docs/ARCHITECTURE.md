@@ -2,15 +2,17 @@
 
 ## Boundaries
 
-`AnnoTape.Core` has no CupriFace or Android dependency. It owns normalized geometry, entered values, undoable commands, database migrations, durable media staging, recovery markers, and flattened export.
+`AnnoTape.Core` has no CupriFace or Android dependency. It owns normalized geometry, entered values, validated annotation colours, attached-versus-manual label state, undoable commands, database migrations, durable media staging, recovery markers, and flattened export. Optional 16-direction snapping is calculated in display coordinates so the visual angles remain correct for non-square images. Unit changes are image-wide, convert display values from the authoritative millimetre value, and are recorded as one undoable edit.
 
 `AnnoTape.App` references Core and CupriFace, but no Android types. `IPlatformCapabilities` is the narrow host seam for app-private storage, camera, photo picking, and sharing. The UI uses a source-image frame with a vector-like CSS overlay; annotation coordinates remain normalized to the oriented source and viewport pan/zoom is transient.
 
 `AnnoTape.Android` owns intents, content URIs, EXIF orientation, camera staging, lifecycle flush, `FileProvider`, package metadata, and the native `CupriActivity` host. It requests no broad storage permission. The camera is invoked through an external activity with a granted output URI, so no direct camera permission is needed.
 
+`AnnoTape.Desktop` is a Windows development host around the same portable app. It uses `CupriFace.Shell`, keeps its data under local application storage, supplies a native photo picker and preview pipeline, and opens exported images with the registered desktop application. Its Camera action intentionally uses the photo picker because it is a layout-testing host rather than a camera implementation.
+
 Android release packaging targets `android-arm64`, uses CoreCLR as required by the pinned CupriFace runtime, and disables ReadyToRun because Windows crossgen2 can fail while rewriting the generated Android resource assembly. This is a documented packaging exception pending measured device evidence.
 
-The current pinned CupriFace/SkiaSharp `SurfaceView` can resume to a completed but black frame after an external picker destroys and recreates its surface. AnnoTape therefore flushes the project, writes a one-shot editor marker, and recreates the Activity after picker or camera completion. The new host consumes the marker and reopens the editor on a fresh graphics surface. This workaround should be removed once CupriFace owns verified EGL recreation.
+CupriFace `0.24.0` owns Android surface restoration after external picker and camera activities. AnnoTape keeps its existing app instance, restores the editor through the normal activity result, and flushes on pause; it does not recreate the activity or maintain a graphics-restart marker.
 
 ## Durability contract
 

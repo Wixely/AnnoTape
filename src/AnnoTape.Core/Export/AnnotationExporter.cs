@@ -73,7 +73,7 @@ public sealed class AnnotationExporter
         var end = new SKPoint((float)(annotation.End.X * width), (float)(annotation.End.Y * height));
         var label = new SKPoint((float)(annotation.LabelAnchor.X * width), (float)(annotation.LabelAnchor.Y * height));
         var scale = Math.Max(1f, Math.Min(width, height) / 1080f);
-        var colour = Colour(annotation.Style);
+        var colour = SKColor.Parse(AnnotationColours.Normalize(annotation.ColourHex, annotation.Style));
         using var stroke = new SKPaint { Color = colour, IsAntialias = true, StrokeWidth = 4f * scale, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round };
         canvas.DrawLine(start, end, stroke);
         DrawArrow(canvas, end, start, stroke, 18f * scale);
@@ -104,13 +104,4 @@ public sealed class AnnotationExporter
         canvas.DrawLine(tip, right, paint);
     }
 
-    private static SKColor Colour(AnnotationStyle style) => style switch
-    {
-        AnnotationStyle.White => SKColors.White,
-        AnnotationStyle.Black => SKColors.Black,
-        AnnotationStyle.Yellow => new SKColor(255, 214, 10),
-        AnnotationStyle.Red => new SKColor(255, 69, 58),
-        _ => new SKColor(184, 115, 51)
-    };
 }
-

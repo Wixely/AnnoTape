@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '0.13.0'
+    [string]$Version = '0.24.0'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,16 +10,20 @@ New-Item -ItemType Directory -Path $packageDirectory -Force | Out-Null
 $packages = @(
     @{
         Name = "CupriFace.$Version.nupkg"
-        Sha256 = '67CD513557049A48C5903A16314EA7ACC5B30DC957BB5566E518BB03189AD863'
+        Sha256 = 'A7DBA721E97478938C63DDD2DD77BFBCA0A3B889481EDCB7D1FC50DA7E7F62DE'
     },
     @{
         Name = "CupriFace.Android.$Version.nupkg"
-        Sha256 = '8E680D367F4A962D4E7BC30A1BAC723DFC24312F82D69C1CD88E97AE1ADEB35E'
+        Sha256 = '0BFC9C02FB4F88D57D0FA2FDF148D537BD4F204571EBCEB1AD762E0BE32A3F81'
+    },
+    @{
+        Name = "CupriFace.Shell.$Version.nupkg"
+        Sha256 = '050B0BA2242465024959CD51358CD2AE41CB60D9C0C6E6D301FA6A5D094D6B39'
     }
 )
 
-if ($Version -ne '0.13.0') {
-    throw 'Hashes are pinned for CupriFace 0.13.0. Update this script before changing the version.'
+if ($Version -ne '0.24.0') {
+    throw 'Hashes are pinned for CupriFace 0.24.0. Update this script before changing the version.'
 }
 
 foreach ($package in $packages) {

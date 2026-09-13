@@ -2,7 +2,7 @@
 
 ## Automated gates
 
-Run both test projects and build the Android host. Tests cover normalized transforms, unit parsing, feet/inches fractions, command history, SQLite round-trip, every DnaX historical migration chain, pre-DnaX database adoption, pending-operation state, source-resolution orientation, metadata-removing re-encode, and a headless CupriFace render.
+Run both test projects and build the Android host. Tests cover normalized transforms, automatic and short-line label placement, 16-direction screen-space snapping, annotation-colour validation, unit parsing and formatting, feet/inches fractions, command history, SQLite round-trip, every DnaX historical migration chain, pre-DnaX database adoption, pending-operation state, source-resolution orientation, arbitrary-colour export, metadata-removing re-encode, and headless CupriFace rendering and diagnostics.
 
 ## Required device matrix before release
 

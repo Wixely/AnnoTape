@@ -79,7 +79,43 @@ public static partial class MeasurementParser
         _ => ""
     };
 
+    public static string Format(decimal millimetres, MeasurementUnit unit, int? precision = null)
+    {
+        if (unit == MeasurementUnit.FeetAndInches)
+        {
+            var totalInches = millimetres / MillimetresPerInch;
+            var feet = decimal.ToInt32(decimal.Floor(totalInches / 12m));
+            var inches = decimal.Round(totalInches - feet * 12m, precision ?? 2, MidpointRounding.AwayFromZero);
+            if (inches >= 12m)
+            {
+                feet++;
+                inches = 0;
+            }
+            return $"{feet}' {FormatNumber(inches, precision ?? 2)}\"";
+        }
+
+        var amount = unit switch
+        {
+            MeasurementUnit.Millimetres => millimetres,
+            MeasurementUnit.Centimetres => millimetres / 10m,
+            MeasurementUnit.Metres => millimetres / 1000m,
+            MeasurementUnit.Inches => millimetres / MillimetresPerInch,
+            _ => throw new ArgumentOutOfRangeException(nameof(unit))
+        };
+        var defaultPrecision = unit switch
+        {
+            MeasurementUnit.Millimetres => 2,
+            MeasurementUnit.Centimetres => 2,
+            MeasurementUnit.Metres => 3,
+            MeasurementUnit.Inches => 2,
+            _ => 2
+        };
+        return FormatNumber(decimal.Round(amount, precision ?? defaultPrecision, MidpointRounding.AwayFromZero), precision ?? defaultPrecision);
+    }
+
+    private static string FormatNumber(decimal value, int precision) =>
+        value.ToString(precision <= 0 ? "0" : $"0.{new string('#', precision)}", CultureInfo.InvariantCulture);
+
     [GeneratedRegex("^\\s*(?<feet>\\d+)\\s*(?:'|ft)\\s*(?:(?<inches>\\d+(?:\\.\\d+)?)\\s*)?(?:(?<num>\\d+)\\s*/\\s*(?<den>\\d+)\\s*)?(?:\"|in)?\\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex FeetInchesRegex();
 }
-

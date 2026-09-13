@@ -29,4 +29,22 @@ public sealed class MeasurementParserTests
     [TestMethod]
     public void RejectsTwelveOrMoreResidualInches() =>
         Assert.IsFalse(MeasurementParser.TryParse("3' 12\"", MeasurementUnit.FeetAndInches, out _));
+
+    [TestMethod]
+    public void AnnotationColoursAreCanonicalAndRejectCssInjection()
+    {
+        Assert.AreEqual("#AABBCC", AnnotationColours.Normalize("#abc"));
+        Assert.AreEqual("#FF453A", AnnotationColours.Normalize(null, AnnotationStyle.Red));
+        Assert.AreEqual(AnnotationColours.Copper, AnnotationColours.Normalize("red;display:none"));
+    }
+
+    [TestMethod]
+    [DataRow("1000", MeasurementUnit.Millimetres, "1000")]
+    [DataRow("1000", MeasurementUnit.Centimetres, "100")]
+    [DataRow("1000", MeasurementUnit.Metres, "1")]
+    [DataRow("25.4", MeasurementUnit.Inches, "1")]
+    [DataRow("1714.5", MeasurementUnit.FeetAndInches, "5' 7.5\"")]
+    public void FormatsStoredMillimetresInTheGlobalUnit(string millimetres, MeasurementUnit unit, string expected) =>
+        Assert.AreEqual(expected, MeasurementParser.Format(
+            decimal.Parse(millimetres, System.Globalization.CultureInfo.InvariantCulture), unit));
 }

@@ -2,6 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Run AnnoTape Desktop (layout testing)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: Desktop debug",
+      "program": "${workspaceFolder}/src/AnnoTape.Desktop/bin/Debug/net10.0-windows/AnnoTape.Desktop.dll",
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
       "name": "Attach to AnnoTape (.NET Android)",
       "type": "coreclr",
       "request": "attach",
@@ -11,4 +21,3 @@
     }
   ]
 }
-

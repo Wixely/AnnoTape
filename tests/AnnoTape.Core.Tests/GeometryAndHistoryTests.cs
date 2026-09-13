@@ -35,6 +35,25 @@ public sealed class GeometryAndHistoryTests
     }
 
     [TestMethod]
+    public void ImageWideEditsUndoAllAnnotationsAsOneOperation()
+    {
+        var first = new DimensionAnnotation { DisplayText = "1000", Unit = MeasurementUnit.Millimetres };
+        var second = new DimensionAnnotation { DisplayText = "2000", Unit = MeasurementUnit.Millimetres };
+        var document = new PhotoDocument { Annotations = { first, second } };
+        var changed = document.Annotations.Select(item => item.Copy()).ToArray();
+        changed[0].DisplayText = "1";
+        changed[0].Unit = MeasurementUnit.Metres;
+        changed[1].DisplayText = "2";
+        changed[1].Unit = MeasurementUnit.Metres;
+        var history = new EditorHistory();
+
+        history.Apply(document, new ReplaceAnnotationsCommand(document.Annotations, changed));
+        Assert.IsTrue(document.Annotations.All(item => item.Unit == MeasurementUnit.Metres));
+        Assert.IsTrue(history.Undo(document));
+        Assert.IsTrue(document.Annotations.All(item => item.Unit == MeasurementUnit.Millimetres));
+    }
+
+    [TestMethod]
     public void HitTestingUsesScreenAspectRatio()
     {
         var distance = ImageGeometry.DistanceToSegmentPixels(
@@ -46,4 +65,3 @@ public sealed class GeometryAndHistoryTests
         Assert.AreEqual(10d, distance, 0.001);
     }
 }
-

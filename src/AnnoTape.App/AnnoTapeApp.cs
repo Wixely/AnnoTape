@@ -27,6 +27,7 @@ public sealed class AnnoTapeApp : CupriApp
     private Guid? _selectedId;
     private DimensionAnnotation? _dragBefore;
     private DimensionAnnotation? _drawing;
+    private Guid? _selectionBeforeDrawing;
     private readonly Dictionary<int, (float X, float Y)> _gestureStarts = [];
     private double _gestureBaseZoom = 1;
     private double _gestureBasePanX;
@@ -91,10 +92,22 @@ public sealed class AnnoTapeApp : CupriApp
         }));
         document.OnClick(".add-measurement", _ => { _model.AddMode = !_model.AddMode; _model.Status = _model.AddMode ? "Drag across the photo" : "Navigate mode"; });
         document.OnClick(".save-value", _ => SaveSelectedValue());
+        document.OnClick(".center-label", _ => CenterSelectedLabel());
         document.OnClick(".delete-measurement", _ => DeleteSelected());
         document.OnClick(".undo", _ => { if (CurrentDocument is { } photo && _history.Undo(photo)) Changed(); });
         document.OnClick(".redo", _ => { if (CurrentDocument is { } photo && _history.Redo(photo)) Changed(); });
         document.OnClick(".open-export", _ => { _model.ExportShelfOpen = true; ScheduleRefresh(); });
+        document.OnAction("data-set-path", e =>
+        {
+            if (e.Value == nameof(EditorViewModel.UnitName))
+            {
+                ApplyGlobalUnit(e.Element.GetAttribute("data-set-value"));
+                return true;
+            }
+            if (!e.Element.ClassList.Contains("cupri-color-sw")) return false;
+            ApplyColour(e.Element.GetAttribute("data-set-value"));
+            return true;
+        });
         document.OnClick(".export-png", _ => ExportFromShelf(ExportFormat.Png));
         document.OnClick(".export-jpeg", _ => ExportFromShelf(ExportFormat.Jpeg));
         document.OnAction("data-select", e => { Select(Guid.Parse(e.Value)); return true; });
@@ -120,6 +133,7 @@ public sealed class AnnoTapeApp : CupriApp
         _model.ProjectNotes = "";
         _model.ProjectLocation = "";
         _model.ImageSource = "";
+        _model.UnitName = nameof(MeasurementUnit.Millimetres);
         _model.AnnotationViews = [];
         _model.Page = "editor";
         _selectedId = null;
@@ -225,21 +239,46 @@ public sealed class AnnoTapeApp : CupriApp
         var point = _model.PointerToImage(pointer.X, pointer.Y);
         if (pointer.Phase == PointerPhase.Down)
         {
-            _drawing = new DimensionAnnotation { Start = point, End = point, LabelAnchor = point };
+            _selectionBeforeDrawing = _selectedId;
+            _drawing = new DimensionAnnotation
+            {
+                Start = point,
+                End = point,
+                LabelAnchor = point,
+                LabelCentered = true,
+                DisplayText = MeasurementParser.Format(1000m, _model.SelectedUnit),
+                Unit = _model.SelectedUnit,
+                ColourHex = AnnotationColours.Normalize(_model.LineColour)
+            };
             photo.Annotations.Add(_drawing);
             _selectedId = _drawing.Id;
         }
         else if (pointer.Phase == PointerPhase.Move && _drawing is not null)
         {
-            _drawing.End = point;
-            _drawing.LabelAnchor = new((_drawing.Start.X + point.X) / 2d, (_drawing.Start.Y + point.Y) / 2d - 0.05);
+            _drawing.End = _model.ApplyAngleSnap(_drawing.Start, point);
+            _drawing.LabelAnchor = AutomaticLabelAnchor(_drawing);
         }
         else if (pointer.Phase == PointerPhase.Up && _drawing is not null)
         {
+            _drawing.End = _model.ApplyAngleSnap(_drawing.Start, point);
+            _drawing.LabelAnchor = AutomaticLabelAnchor(_drawing);
+            if (!_model.IsMeasurementDrag(_drawing.Start, _drawing.End))
+            {
+                photo.Annotations.RemoveAll(item => item.Id == _drawing.Id);
+                _drawing = null;
+                _selectedId = _selectionBeforeDrawing;
+                _selectionBeforeDrawing = null;
+                _model.Status = "Drag between two points to add a measurement";
+                SyncSelection();
+                RebuildAnnotations();
+                return true;
+            }
+
             var completed = _drawing.Copy();
             photo.Annotations.RemoveAll(item => item.Id == completed.Id);
             _history.Apply(photo, new AddAnnotationCommand(completed));
             _drawing = null;
+            _selectionBeforeDrawing = null;
             _model.AddMode = false;
             _model.Status = "Enter the real measurement below";
             SyncSelection();
@@ -249,6 +288,9 @@ public sealed class AnnoTapeApp : CupriApp
         {
             photo.Annotations.RemoveAll(item => item.Id == _drawing.Id);
             _drawing = null;
+            _selectedId = _selectionBeforeDrawing;
+            _selectionBeforeDrawing = null;
+            SyncSelection();
         }
         RebuildAnnotations();
         return true;
@@ -270,9 +312,22 @@ public sealed class AnnoTapeApp : CupriApp
         else if (pointer.Phase == PointerPhase.Move)
         {
             var point = _model.PointerToImage(pointer.X, pointer.Y);
-            if (parts[0] == "start") annotation.Start = point;
-            else if (parts[0] == "end") annotation.End = point;
-            else annotation.LabelAnchor = point;
+            if (parts[0] == "start")
+            {
+                annotation.Start = _model.ApplyAngleSnap(annotation.End, point);
+                if (annotation.LabelCentered) annotation.LabelAnchor = AutomaticLabelAnchor(annotation);
+            }
+            else if (parts[0] == "end")
+            {
+                annotation.End = _model.ApplyAngleSnap(annotation.Start, point);
+                if (annotation.LabelCentered) annotation.LabelAnchor = AutomaticLabelAnchor(annotation);
+            }
+            else
+            {
+                annotation.LabelCentered = _model.IsNearAutomaticLabelAnchor(
+                    point, annotation.Start, annotation.End, AnnotationViewModel.LabelWidthFor(annotation));
+                annotation.LabelAnchor = annotation.LabelCentered ? AutomaticLabelAnchor(annotation) : point;
+            }
             annotation.ModifiedUtc = DateTimeOffset.UtcNow;
         }
         else if (pointer.Phase == PointerPhase.Up && _dragBefore is not null)
@@ -304,6 +359,7 @@ public sealed class AnnoTapeApp : CupriApp
         after.NormalizedMillimetres = measurement.Millimetres;
         after.Unit = measurement.Unit;
         after.Label = string.IsNullOrWhiteSpace(_model.MeasurementLabel) ? null : _model.MeasurementLabel.Trim();
+        if (after.LabelCentered) after.LabelAnchor = AutomaticLabelAnchor(after);
         after.ModifiedUtc = DateTimeOffset.UtcNow;
         _history.Apply(photo, new ReplaceAnnotationCommand(before, after));
         _model.Status = "Measurement saved";
@@ -331,29 +387,86 @@ public sealed class AnnoTapeApp : CupriApp
             Start = NormalizedPoint.Clamp(source.Start.X + 0.03, source.Start.Y + 0.03),
             End = NormalizedPoint.Clamp(source.End.X + 0.03, source.End.Y + 0.03),
             LabelAnchor = NormalizedPoint.Clamp(source.LabelAnchor.X + 0.03, source.LabelAnchor.Y + 0.03),
+            LabelCentered = source.LabelCentered,
             DisplayText = source.DisplayText,
             NormalizedMillimetres = source.NormalizedMillimetres,
             Unit = source.Unit,
             Precision = source.Precision,
             Label = source.Label,
-            Style = source.Style
+            Style = source.Style,
+            ColourHex = source.ColourHex
         };
+        if (copy.LabelCentered) copy.LabelAnchor = AutomaticLabelAnchor(copy);
         _history.Apply(photo, new AddAnnotationCommand(copy));
         _selectedId = copy.Id;
         Changed();
     }
 
-    private void RecolourSelected()
+    private void ApplyColour(string? value)
+    {
+        var colour = AnnotationColours.Normalize(value);
+        _model.LineColour = colour;
+        _model.ColourOpen = false;
+        if (CurrentDocument is not { } photo || _selectedId is not { } id)
+        {
+            _model.Status = $"New measurements will use {colour}";
+            ScheduleRefresh();
+            return;
+        }
+        var source = photo.Annotations.FirstOrDefault(item => item.Id == id);
+        if (source is null) return;
+        if (string.Equals(AnnotationColours.Normalize(source.ColourHex, source.Style), colour, StringComparison.OrdinalIgnoreCase)) return;
+        var after = source.Copy();
+        after.ColourHex = colour;
+        after.ModifiedUtc = DateTimeOffset.UtcNow;
+        _history.Apply(photo, new ReplaceAnnotationCommand(source, after));
+        _model.Status = "Measurement colour updated";
+        Changed();
+    }
+
+    private void CenterSelectedLabel()
     {
         if (CurrentDocument is not { } photo || _selectedId is not { } id) return;
         var source = photo.Annotations.FirstOrDefault(item => item.Id == id);
         if (source is null) return;
         var after = source.Copy();
-        after.Style = (AnnotationStyle)(((int)source.Style + 1) % Enum.GetValues<AnnotationStyle>().Length);
+        after.LabelCentered = true;
+        after.LabelAnchor = AutomaticLabelAnchor(after);
         after.ModifiedUtc = DateTimeOffset.UtcNow;
         _history.Apply(photo, new ReplaceAnnotationCommand(source, after));
+        _model.Status = "Label returned to the line centre";
         Changed();
     }
+
+    private void ApplyGlobalUnit(string? value)
+    {
+        _model.UnitOpen = false;
+        if (!Enum.TryParse<MeasurementUnit>(value, out var unit)) return;
+        _model.UnitName = unit.ToString();
+        if (CurrentDocument is not { } photo || photo.Annotations.Count == 0)
+        {
+            _model.Status = $"New measurements will use {MeasurementParser.Suffix(unit)}";
+            ScheduleRefresh();
+            return;
+        }
+
+        var before = photo.Annotations.Select(item => item.Copy()).ToArray();
+        var after = before.Select(item =>
+        {
+            var converted = item.Copy();
+            converted.Unit = unit;
+            converted.DisplayText = MeasurementParser.Format(converted.NormalizedMillimetres, unit, converted.Precision);
+            if (converted.LabelCentered) converted.LabelAnchor = AutomaticLabelAnchor(converted);
+            converted.ModifiedUtc = DateTimeOffset.UtcNow;
+            return converted;
+        }).ToArray();
+        _history.Apply(photo, new ReplaceAnnotationsCommand(before, after));
+        _model.Status = $"All measurements converted to {MeasurementParser.Suffix(unit)}";
+        Changed();
+    }
+
+    private NormalizedPoint AutomaticLabelAnchor(DimensionAnnotation annotation) =>
+        _model.LabelAnchorFor(annotation.Start, annotation.End, AnnotationViewModel.LabelWidthFor(annotation));
 
     private void Select(Guid id)
     {
@@ -374,6 +487,7 @@ public sealed class AnnoTapeApp : CupriApp
         _model.MeasurementText = annotation.DisplayText;
         _model.MeasurementLabel = annotation.Label ?? "";
         _model.UnitName = annotation.Unit.ToString();
+        _model.LineColour = AnnotationColours.Normalize(annotation.ColourHex, annotation.Style);
         _model.SelectionSummary = $"Selected: {annotation.DisplayText} {MeasurementParser.Suffix(annotation.Unit)}";
     }
 
@@ -461,7 +575,11 @@ public sealed class AnnoTapeApp : CupriApp
         _model.ProjectLocation = recovered.Location ?? "";
         _model.Page = "editor";
         var photo = recovered.Documents.FirstOrDefault();
-        if (photo is not null) await LoadDisplayPhotoAsync(photo);
+        if (photo is not null)
+        {
+            ApplyDocumentDefaults(photo);
+            await LoadDisplayPhotoAsync(photo);
+        }
         RebuildAnnotations();
     }
 
@@ -475,6 +593,7 @@ public sealed class AnnoTapeApp : CupriApp
         _model.ProjectNotes = project.Notes;
         _model.ProjectLocation = project.Location ?? "";
         var photo = project.Documents.FirstOrDefault();
+        if (photo is not null) ApplyDocumentDefaults(photo);
         _model.ImageSource = "";
         if (photo is not null && !await LoadDisplayPhotoAsync(photo))
             _model.Status = "The original photo is safe, but its display preview could not be created.";
@@ -482,6 +601,13 @@ public sealed class AnnoTapeApp : CupriApp
         _selectedId = null;
         await _repository.SaveAsync(_project);
         RebuildAnnotations();
+    }
+
+    private void ApplyDocumentDefaults(PhotoDocument photo)
+    {
+        if (photo.Annotations.FirstOrDefault() is not { } annotation) return;
+        _model.UnitName = annotation.Unit.ToString();
+        _model.LineColour = AnnotationColours.Normalize(annotation.ColourHex, annotation.Style);
     }
 
     private async Task InitializeApplicationAsync()
@@ -492,8 +618,6 @@ public sealed class AnnoTapeApp : CupriApp
             _autosave = new DebouncedAutosave(_repository, TimeSpan.FromMilliseconds(450));
             await LoadRecentAsync();
             await RecoverPendingAsync();
-            if (_storage.TakeHostRestartProject() is { } restartProjectId)
-                await OpenProjectAsync(restartProjectId);
             if (_model.Status == "Starting storage…") _model.Status = "Ready";
         }
         catch (Exception exception)
