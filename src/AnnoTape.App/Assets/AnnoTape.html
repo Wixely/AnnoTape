@@ -6,8 +6,8 @@
         <span class="eyebrow">PHOTO MEASUREMENT</span>
         <h2>Measure what matters.</h2>
         <p>Capture a photo, draw a dimension, and enter the real value. Your work stays on this device.</p>
-        <cupri-button class="take-photo primary" aria-label="Take a photo">Take photo</cupri-button>
-        <cupri-button class="pick-photo" variant="ghost" aria-label="Choose a photo">Choose photo</cupri-button>
+        <cupri-button class="take-photo primary" aria-label="Take a photo"><span class="button-label">Take photo</span></cupri-button>
+        <cupri-button class="pick-photo" variant="ghost" aria-label="Choose a photo"><span class="button-label">Choose photo</span></cupri-button>
       </div>
       <div class="recent">
         <div class="section-title"><b>Recent projects</b><span>LOCAL</span></div>
@@ -30,7 +30,7 @@
         <div class="empty" style="display:{{EmptyDisplay}}">
           <b>Add a photo to begin</b>
           <span>Choose where your measurement starts.</span>
-          <div class="empty-actions"><cupri-button class="take-photo">Camera</cupri-button><cupri-button class="pick-photo" variant="ghost">Photo picker</cupri-button></div>
+          <div class="empty-actions"><cupri-button class="take-photo"><span class="button-label">Camera</span></cupri-button><cupri-button class="pick-photo" variant="ghost"><span class="button-label">Photo picker</span></cupri-button></div>
         </div>
         <div class="image-frame" style="{{ImageFrameStyle}}">
           <cupri-image class="photo" src="{{ImageSource}}" fit="fill" aria-label="Source photo"></cupri-image>
@@ -44,15 +44,15 @@
       <section class="{{InspectorClass}}">
         <cupri-toolbar class="tools" style="display:{{ToolsDisplay}}" label="Editor actions">
           <cupri-toolbar-group class="measure-tools">
-            <cupri-button class="{{AddButtonClass}}" aria-label="Add measurement" aria-pressed="{{AddMode}}">{{AddButtonLabel}}</cupri-button>
+            <cupri-button class="{{AddButtonClass}}" aria-label="Add measurement" aria-pressed="{{AddMode}}"><span class="button-label">{{AddButtonLabel}}</span></cupri-button>
           </cupri-toolbar-group>
           <div class="tool-divider" aria-hidden="true"></div>
           <cupri-toolbar-group class="history-tools">
-            <cupri-button class="undo" variant="ghost" aria-label="Undo last edit">Undo</cupri-button>
-            <cupri-button class="redo" variant="ghost" aria-label="Redo last edit">Redo</cupri-button>
+            <cupri-button class="undo" variant="ghost" aria-label="Undo last edit"><span class="button-label">Undo</span></cupri-button>
+            <cupri-button class="redo" variant="ghost" aria-label="Redo last edit"><span class="button-label">Redo</span></cupri-button>
           </cupri-toolbar-group>
           <cupri-toolbar-group class="export-tools" push>
-            <cupri-button class="open-export" variant="ghost" aria-label="Export annotated image">Export</cupri-button>
+            <cupri-button class="open-export" variant="ghost" aria-label="Export annotated image"><span class="button-label">Export</span></cupri-button>
           </cupri-toolbar-group>
         </cupri-toolbar>
         <div class="draw-options" style="display:{{ToolsDisplay}}">
@@ -71,9 +71,9 @@
             <cupri-textfield class="value-input" value="{{MeasurementText}}" inputmode="decimal" aria-label="Measurement value"></cupri-textfield>
           </div>
           <div class="selection-actions">
-            <cupri-button class="save-value" aria-label="Save measurement">Save measurement</cupri-button>
-            <cupri-button class="center-label" variant="ghost" aria-label="Return label to line centre">Center label</cupri-button>
-            <cupri-button class="danger delete-measurement" variant="ghost" aria-label="Delete measurement">Delete</cupri-button>
+            <cupri-button class="save-value" aria-label="Save measurement"><span class="button-label">Save measurement</span></cupri-button>
+            <cupri-button class="center-label" variant="ghost" aria-label="Return label to line centre"><span class="button-label">Center label</span></cupri-button>
+            <cupri-button class="danger delete-measurement" variant="ghost" aria-label="Delete measurement"><span class="button-label">Delete</span></cupri-button>
           </div>
         </div>
         <div class="details">
@@ -96,6 +96,6 @@
         <b>JPEG</b><span>Smaller · easy to share</span>
       </cupri-button>
     </div>
-    <cupri-button class="shelf-cancel" variant="ghost" data-cupri-dismiss="true">Cancel</cupri-button>
+    <cupri-button class="shelf-cancel" variant="ghost" data-cupri-dismiss="true"><span class="button-label">Cancel</span></cupri-button>
   </cupri-shelf>
 </body>

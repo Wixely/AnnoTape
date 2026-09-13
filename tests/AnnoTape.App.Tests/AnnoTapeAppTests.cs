@@ -363,7 +363,7 @@ public sealed class AnnoTapeAppTests
             var className = button.Element?.ClassName ?? "button";
             Assert.AreEqual(buttonBox.X + buttonBox.W / 2, (contentLeft + contentRight) / 2, 1f,
                 $"Horizontal centring failed for {className}.\n{document.DumpTree()}");
-            Assert.AreEqual(buttonBox.Y + buttonBox.H / 2, (contentTop + contentBottom) / 2, 5f,
+            Assert.AreEqual(buttonBox.Y + buttonBox.H / 2, (contentTop + contentBottom) / 2, 1f,
                 $"Vertical centring failed for {className}.\n{document.DumpTree()}");
         }
     }
