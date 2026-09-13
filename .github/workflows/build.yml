@@ -3,6 +3,7 @@ name: build
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,17 +14,28 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out AnnoTape
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Check out pinned DnaX
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: Wixely/DnaX
           ref: ab1471dd0caa3775f3bd26f9f12bf04d7df8752e
           path: external/DnaX
+          persist-credentials: false
+
+      - name: Check out pinned CupriFace
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: Wixely/CupriFace
+          ref: 9e4d6208450b777f0bfe361baa1f34d1a89acd7c
+          path: external/CupriFace
+          persist-credentials: false
 
       - name: Set up .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           dotnet-version: 10.0.300
 
@@ -37,7 +49,7 @@ jobs:
 
       - name: Prepare pinned CupriFace packages
         shell: powershell
-        run: .\eng\Prepare-CupriFacePackages.ps1
+        run: .\eng\Prepare-CupriFacePackages.ps1 -CupriFaceRoot .\external\CupriFace
 
       - name: Test core
         shell: powershell
@@ -46,6 +58,10 @@ jobs:
       - name: Test portable UI
         shell: powershell
         run: dotnet test tests\AnnoTape.App.Tests\AnnoTape.App.Tests.csproj -c Release
+
+      - name: Build desktop layout host
+        shell: powershell
+        run: dotnet build src\AnnoTape.Desktop\AnnoTape.Desktop.csproj -c Release
 
       - name: Publish APK
         shell: powershell
@@ -58,17 +74,22 @@ jobs:
           if (-not $apk) { throw "Signed test APK was not produced." }
           $aapt = Get-ChildItem "$env:ANDROID_HOME\build-tools" -Recurse -Filter aapt2.exe | Sort-Object FullName -Descending | Select-Object -First 1
           if (-not $aapt) { throw "aapt2 was not found." }
-          $badging = & $aapt.FullName dump badging $apk.FullName
+          $badging = (& $aapt.FullName dump badging $apk.FullName) -join "`n"
           if ($badging -notmatch "package: name='app.annotape.mobile'") { throw "Unexpected package identity." }
           if ($badging -notmatch "minSdkVersion:'24'") { throw "Unexpected minimum API." }
           if ($badging -notmatch "native-code: 'arm64-v8a'") { throw "Unexpected native ABI." }
-          $permissions = & $aapt.FullName dump permissions $apk.FullName
+          $permissions = (& $aapt.FullName dump permissions $apk.FullName) -join "`n"
           if ($permissions -match "uses-permission: name='android.permission.") { throw "Unexpected Android platform permission in APK." }
+          New-Item -ItemType Directory -Path artifacts\apk -Force | Out-Null
+          Copy-Item -LiteralPath $apk.FullName -Destination artifacts\apk\AnnoTape-android-arm64-test-signed.apk
+          $hash = (Get-FileHash artifacts\apk\AnnoTape-android-arm64-test-signed.apk -Algorithm SHA256).Hash
+          Set-Content -Path artifacts\apk\SHA256.txt -Value "$hash  AnnoTape-android-arm64-test-signed.apk" -Encoding ascii
 
       - name: Upload debug-signed test APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: AnnoTape-android-test-apk
-          path: src/AnnoTape.Android/bin/Release/net10.0-android/android-arm64/publish/*.apk
+          name: AnnoTape-android-arm64-test-apk
+          path: artifacts/apk
           if-no-files-found: error
-          retention-days: 5
+          compression-level: 0
+          retention-days: 14

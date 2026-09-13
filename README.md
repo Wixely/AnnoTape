@@ -16,7 +16,7 @@ Version 0.1 uses one photo per project. The schema already supports ordered mult
 
 - C# and .NET 10
 - Plain .NET for Android (no MAUI, WebView, JavaScript, or browser shell)
-- [CupriFace](https://github.com/Wixely/CupriFace) `0.24.0`
+- [CupriFace](https://github.com/Wixely/CupriFace) engine/shell `0.24.1-annotape.4` from pinned source; Android host `0.24.0`
 - SQLite with Dapper and DnaX `10.0.0-alpha.2` checksummed migrations
 - SkiaSharp source-resolution export
 - Minimum Android API 24; Android 13+ uses the system photo picker and earlier releases use `ACTION_OPEN_DOCUMENT`
@@ -51,6 +51,10 @@ The preparation scripts populate the ignored repository-local `.packages` feed. 
 CupriFace engine/shell are built from pinned checkouts; the unchanged CupriFace Android host is
 downloaded from the official `0.24.0` release and verified by SHA-256. Pass `-DnaXRoot` or
 `-CupriFaceRoot` when either checkout is elsewhere.
+
+GitHub Actions runs the Release tests, builds the Windows desktop layout host, and publishes a
+downloadable ARM64 test-signed APK plus its SHA-256 checksum on every push and pull request. The
+workflow can also be started manually. The artifact is suitable for testing, not store release.
 
 For desktop layout testing, select **Run AnnoTape Desktop (layout testing)** in VS Code's Run and Debug view and press F5. The desktop Camera and Photo picker actions both open a local image picker; exported images open in the registered Windows image application. Scroll over the photo to zoom around the cursor, and hold the middle mouse button while moving to grab and pan it.
 
