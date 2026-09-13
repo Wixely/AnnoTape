@@ -65,6 +65,8 @@ public sealed class AnnoTapeApp : CupriApp
     protected override CupriSource StyleSource =>
         CupriSource.Embedded<AnnoTapeApp>("AnnoTape.App.Assets.AnnoTape.css");
     public override string Title => "AnnoTape";
+    public override byte[]? Icon =>
+        CupriSource.Embedded<AnnoTapeApp>("Assets/annotape-icon.png").ReadBytes();
     public override int Width => 400;
     public override int Height => 800;
     public override SKColor Background => new(0x05, 0x05, 0x06);

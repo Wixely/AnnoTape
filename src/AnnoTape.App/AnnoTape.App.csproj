@@ -10,5 +10,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Assets/AnnoTape.html" LogicalName="AnnoTape.App.Assets.AnnoTape.html" />
     <EmbeddedResource Include="Assets/AnnoTape.css" LogicalName="AnnoTape.App.Assets.AnnoTape.css" />
+    <EmbeddedResource Include="Assets/annotape-icon.png" LogicalName="Assets/annotape-icon.png" />
+    <EmbeddedResource Include="Assets/empty-measurement.png" LogicalName="Assets/empty-measurement.png" />
   </ItemGroup>
 </Project>

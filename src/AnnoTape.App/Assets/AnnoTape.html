@@ -1,7 +1,7 @@
 <body>
   <div class="app">
     <main class="home" style="display:{{HomeDisplay}}">
-      <div class="brand"><span class="mark">AT</span><div><h1>AnnoTape</h1><span>annotate + tape measure</span></div></div>
+      <div class="brand"><cupri-image class="mark" src="Assets/annotape-icon.png" alt=""></cupri-image><div><h1>AnnoTape</h1><span>annotate + tape measure</span></div></div>
       <div class="hero">
         <span class="eyebrow">PHOTO MEASUREMENT</span>
         <h2>Measure what matters.</h2>
@@ -28,6 +28,7 @@
 
       <div class="stage" data-editor="photo editor" aria-label="Photo editor. Pinch to zoom or drag to pan.">
         <div class="empty" style="display:{{EmptyDisplay}}">
+          <cupri-image class="empty-illustration" src="Assets/empty-measurement.png" alt="Photo with a dimension line"></cupri-image>
           <b>Add a photo to begin</b>
           <span>Choose where your measurement starts.</span>
           <div class="empty-actions"><cupri-button class="take-photo"><span class="button-label">Camera</span></cupri-button><cupri-button class="pick-photo" variant="ghost"><span class="button-label">Photo picker</span></cupri-button></div>

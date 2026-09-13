@@ -13,8 +13,7 @@ body {
 .brand h1 { margin:0; font-size:27px; line-height:1; }
 .brand span { color:#9f989b; font-size:12px; }
 .mark {
-  width:48px; height:48px; border-radius:13px; background:#e32636; color:#fff !important;
-  display:flex; align-items:center; justify-content:center; font-size:16px !important; font-weight:bold;
+  width:48px; height:48px; border-radius:13px;
   box-shadow:0 8px 24px #e3263640;
 }
 .hero {
@@ -58,6 +57,7 @@ header .cupri-textfield { background:#111115; border-color:#2c2c33; }
 }
 .empty b { width:100%; color:#f7f3f4; font-size:18px; text-align:center; }
 .empty span { width:100%; color:#8f898c; font-size:12px; text-align:center; }
+.empty-illustration { flex:none; width:130px; height:76px; margin-bottom:4px; }
 .empty-actions { width:72%; display:flex; flex-direction:column; gap:9px; margin-top:10px; }
 .empty-actions .cupri-button { display:flex; align-items:center; justify-content:center; text-align:center; }
 .image-frame { position:absolute; transform-origin:center center; }
@@ -158,4 +158,7 @@ header .cupri-textfield { background:#111115; border-color:#2c2c33; }
   .tools .add-measurement { min-width:70px; }
   .selection-summary { display:none; }
   .export-option span { white-space:normal; }
+}
+@media (min-height:600px) {
+  .empty-illustration { width:190px; height:112px; }
 }

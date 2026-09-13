@@ -92,6 +92,36 @@ public sealed class AnnoTapeAppTests
     }
 
     [TestMethod]
+    public async Task GeneratedBrandGraphicsRenderInHomeAndEmptyEditor()
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+        Assert.IsGreaterThan(100_000, app.Icon?.Length ?? 0);
+
+        using (var home = app.CreateDocument())
+        {
+            Assert.IsTrue(home.Settle(400, 800));
+            using var homeImage = home.RenderToImage(400, 800, app.Background);
+            var mark = Find(home.Root, node => node.Element?.ClassList.Contains("mark") == true);
+            Assert.IsNotNull(mark);
+            var markBox = HitTesting.ScreenBox(mark);
+            Assert.AreEqual(48, markBox.W, 0.1);
+            SaveSnapshotIfRequested(homeImage, "brand-home.png");
+        }
+
+        ((EditorViewModel)app.Model).Page = "editor";
+        using var editor = app.CreateDocument();
+        Assert.IsTrue(editor.Settle(400, 800));
+        using var editorImage = editor.RenderToImage(400, 800, app.Background);
+        var illustration = Find(editor.Root, node => node.Element?.ClassList.Contains("empty-illustration") == true);
+        Assert.IsNotNull(illustration);
+        var illustrationBox = HitTesting.ScreenBox(illustration);
+        Assert.AreEqual(190, illustrationBox.W, 0.1);
+        Assert.AreEqual(112, illustrationBox.H, 0.1);
+        SaveSnapshotIfRequested(editorImage, "brand-empty-editor.png");
+    }
+
+    [TestMethod]
     [DataRow(320, 720)]
     [DataRow(400, 800)]
     [DataRow(800, 400)]
@@ -470,6 +500,16 @@ public sealed class AnnoTapeAppTests
         }
         Walk(node);
         return found;
+    }
+
+    private static void SaveSnapshotIfRequested(SKImage image, string fileName)
+    {
+        var directory = Environment.GetEnvironmentVariable("ANNOTAPE_SNAPSHOT_DIR");
+        if (string.IsNullOrWhiteSpace(directory)) return;
+        Directory.CreateDirectory(directory);
+        using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+        using var output = File.Create(Path.Combine(directory, fileName));
+        encoded.SaveTo(output);
     }
 
     private sealed class FakePlatform(string appDataPath) : IPlatformCapabilities
