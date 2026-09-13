@@ -28,11 +28,13 @@ public sealed class AnnoTapeApp : CupriApp
     private DimensionAnnotation? _dragBefore;
     private DimensionAnnotation? _drawing;
     private Guid? _selectionBeforeDrawing;
-    private readonly Dictionary<int, (float X, float Y)> _gestureStarts = [];
     private double _gestureBaseZoom = 1;
     private double _gestureBasePanX;
     private double _gestureBasePanY;
     private double _gestureBaseDistance;
+    private double _gestureBaseFocusX;
+    private double _gestureBaseFocusY;
+    private int _gesturePointerCount;
     private int _refreshRequested;
     private int _saveGeneration;
 
@@ -122,6 +124,7 @@ public sealed class AnnoTapeApp : CupriApp
         });
         document.OnPointer("data-drag", HandleAnnotationDrag);
         document.OnPointer("data-editor", HandleEditorPointer);
+        document.OnWheel("data-editor", HandleEditorWheel);
     }
 
     private PhotoDocument? CurrentDocument => _project.Documents.FirstOrDefault();
@@ -205,32 +208,55 @@ public sealed class AnnoTapeApp : CupriApp
 
     private bool HandleEditorPointer(MultiPointerEvent pointer)
     {
-        if (_model.AddMode) return HandleDrawing(pointer);
-        _gestureStarts[pointer.Id] = (pointer.X, pointer.Y);
-        if (pointer.Phase == PointerPhase.Down)
+        if (_model.AddMode && !pointer.IsMiddleButton && pointer.Pointers.Count == 1) return HandleDrawing(pointer);
+        if (_model.AddMode && (pointer.IsMiddleButton || pointer.Pointers.Count >= 2)) CancelDrawingForNavigation();
+
+        var (focusX, focusY) = PointerCentre(pointer.Pointers);
+        var pointerCount = pointer.Pointers.Count;
+        if (pointer.Phase == PointerPhase.Down || pointerCount != _gesturePointerCount)
         {
             _gestureBaseZoom = _model.Zoom;
             _gestureBasePanX = _model.PanX;
             _gestureBasePanY = _model.PanY;
-            if (pointer.Pointers.Count >= 2) _gestureBaseDistance = Distance(pointer.Pointers[0], pointer.Pointers[1]);
+            _gestureBaseFocusX = focusX;
+            _gestureBaseFocusY = focusY;
+            _gestureBaseDistance = pointerCount >= 2 ? PointerSpread(pointer.Pointers) : 0;
+            _gesturePointerCount = pointerCount;
             return true;
         }
         if (pointer.Phase == PointerPhase.Move)
         {
-            if (pointer.Pointers.Count >= 2)
-            {
-                var distance = Distance(pointer.Pointers[0], pointer.Pointers[1]);
-                if (_gestureBaseDistance > 0) _model.Zoom = Math.Clamp(_gestureBaseZoom * distance / _gestureBaseDistance, 1, 8);
-            }
-            else if (_gestureStarts.TryGetValue(pointer.Id, out var start))
-            {
-                _model.PanX = _gestureBasePanX + pointer.X - start.X;
-                _model.PanY = _gestureBasePanY + pointer.Y - start.Y;
-            }
-            return true;
+            var zoom = _gestureBaseZoom;
+            if (pointerCount >= 2 && _gestureBaseDistance > 0.01)
+                zoom *= PointerSpread(pointer.Pointers) / _gestureBaseDistance;
+            return _model.SetViewport(
+                _gestureBaseZoom, _gestureBasePanX, _gestureBasePanY,
+                _gestureBaseFocusX, _gestureBaseFocusY, focusX, focusY, zoom);
         }
-        if (pointer.Phase is PointerPhase.Up or PointerPhase.Cancel) _gestureStarts.Remove(pointer.Id);
+        if (pointer.Phase is PointerPhase.Up or PointerPhase.Cancel && pointerCount <= 1) _gesturePointerCount = 0;
         return true;
+    }
+
+    private bool HandleEditorWheel(CupriWheelEvent wheel)
+    {
+        if (_model.ImageSource.Length == 0) return false;
+        var steps = -wheel.DeltaY / 50d;
+        var targetZoom = _model.Zoom * Math.Pow(1.18, steps);
+        _model.SetViewport(
+            _model.Zoom, _model.PanX, _model.PanY,
+            wheel.X, wheel.Y, wheel.X, wheel.Y, targetZoom);
+        return true;
+    }
+
+    private void CancelDrawingForNavigation()
+    {
+        if (_drawing is null || CurrentDocument is not { } photo) return;
+        photo.Annotations.RemoveAll(item => item.Id == _drawing.Id);
+        _drawing = null;
+        _selectedId = _selectionBeforeDrawing;
+        _selectionBeforeDrawing = null;
+        SyncSelection();
+        RebuildAnnotations();
     }
 
     private bool HandleDrawing(MultiPointerEvent pointer)
@@ -530,9 +556,10 @@ public sealed class AnnoTapeApp : CupriApp
             var extension = format == ExportFormat.Png ? ".png" : ".jpg";
             var path = Path.Combine(directory, $"AnnoTape-{DateTime.UtcNow:yyyyMMdd-HHmmss}{extension}");
             await using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
-                await _exporter.ExportAsync(photo, stream, new ExportOptions(format));
+                await _exporter.ExportAsync(photo, stream,
+                    new ExportOptions(format, MaxDimension: _model.ExportFullSize ? null : 2048));
             await _platform.ShareFileAsync(path, format == ExportFormat.Png ? "image/png" : "image/jpeg");
-            _model.Status = "Export ready to share";
+            _model.Status = _model.ExportFullSize ? "Full-resolution export ready to share" : "Share-size export ready";
         }
         catch (Exception exception)
         {
@@ -678,6 +705,17 @@ public sealed class AnnoTapeApp : CupriApp
         }
     }
 
-    private static double Distance(CupriPointer first, CupriPointer second) =>
-        Math.Sqrt(Math.Pow(first.X - second.X, 2) + Math.Pow(first.Y - second.Y, 2));
+    private static (double X, double Y) PointerCentre(IReadOnlyList<CupriPointer> pointers)
+    {
+        if (pointers.Count == 0) return (0, 0);
+        return (pointers.Average(item => item.X), pointers.Average(item => item.Y));
+    }
+
+    private static double PointerSpread(IReadOnlyList<CupriPointer> pointers)
+    {
+        if (pointers.Count < 2) return 0;
+        var centre = PointerCentre(pointers);
+        return pointers.Average(item => Math.Sqrt(
+            Math.Pow(item.X - centre.X, 2) + Math.Pow(item.Y - centre.Y, 2)));
+    }
 }

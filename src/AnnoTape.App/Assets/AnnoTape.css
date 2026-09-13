@@ -134,7 +134,12 @@ header .cupri-textfield { background:#111115; border-color:#2c2c33; }
 .export-shelf .cupri-shelf-grip { background:#5b3035; }
 .shelf-title { color:#f7f3f4; font-size:22px; font-weight:bold; text-align:center; }
 .shelf-copy { margin-top:5px; color:#9f989b; font-size:12px; text-align:center; }
-.export-options { display:flex; gap:10px; margin-top:18px; }
+.export-resolution { min-height:54px; margin-top:14px; padding:8px 11px; display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid #34343c; border-radius:10px; background:#111115; }
+.export-resolution > div { display:flex; flex-direction:column; gap:3px; }
+.export-resolution b { font-size:12px; }
+.export-resolution span { color:#9f989b; font-size:10px; }
+.export-resolution .cupri-switch { flex:none; }
+.export-options { display:flex; gap:10px; margin-top:10px; }
 .export-option.cupri-button {
   flex:1; min-width:0; min-height:86px; padding:14px; border-radius:12px; display:flex;
   flex-direction:column; align-items:flex-start; justify-content:center; gap:5px; text-align:left;

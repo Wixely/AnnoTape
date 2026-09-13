@@ -31,6 +31,7 @@ Prerequisites are .NET SDK `10.0.300`, the .NET Android workload, and a clean Dn
 git/
   AnnoTape/
   DnaX/        # commit ab1471dd0caa3775f3bd26f9f12bf04d7df8752e
+  CupriFace/   # commit 9e4d6208450b777f0bfe361baa1f34d1a89acd7c
 ```
 
 Then run:
@@ -44,9 +45,12 @@ dotnet build src\AnnoTape.Desktop\AnnoTape.Desktop.csproj -c Debug
 dotnet build src\AnnoTape.Android\AnnoTape.Android.csproj -c Debug
 ```
 
-The preparation scripts populate the ignored repository-local `.packages` feed. DnaX is built from its pinned checkout; CupriFace `0.24.0` is downloaded from its official GitHub release and verified by SHA-256. Pass `-DnaXRoot C:\path\to\DnaX` when DnaX is not beside AnnoTape.
+The preparation scripts populate the ignored repository-local `.packages` feed. DnaX and the
+CupriFace engine/shell are built from pinned checkouts; the unchanged CupriFace Android host is
+downloaded from the official `0.24.0` release and verified by SHA-256. Pass `-DnaXRoot` or
+`-CupriFaceRoot` when either checkout is elsewhere.
 
-For desktop layout testing, select **Run AnnoTape Desktop (layout testing)** in VS Code's Run and Debug view and press F5. The desktop Camera and Photo picker actions both open a local image picker; exported images open in the registered Windows image application.
+For desktop layout testing, select **Run AnnoTape Desktop (layout testing)** in VS Code's Run and Debug view and press F5. The desktop Camera and Photo picker actions both open a local image picker; exported images open in the registered Windows image application. Scroll over the photo to zoom around the cursor, and hold the middle mouse button while moving to grab and pan it.
 
 Build an installable release APK with:
 

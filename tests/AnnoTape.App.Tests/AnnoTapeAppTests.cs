@@ -138,6 +138,98 @@ public sealed class AnnoTapeAppTests
         Assert.AreEqual(800, image.Height);
         Assert.IsTrue(model.ExportShelfOpen);
         Assert.IsNotNull(Find(document.Root, node => node.Element?.ClassList.Contains("cupri-shelf-panel") == true));
+
+        var fullSizeSwitch = Find(document.Root, node =>
+            node.Element?.ClassList.Contains("cupri-switch") == true &&
+            AttributeUp(node, "aria-label") == "Export at original image resolution");
+        Assert.IsNotNull(fullSizeSwitch);
+        var switchBox = HitTesting.ScreenBox(fullSizeSwitch);
+        document.DispatchClick(switchBox.X + switchBox.W / 2, switchBox.Y + switchBox.H / 2);
+        Assert.IsFalse(model.ExportFullSize);
+        Assert.Contains("2048", model.ExportSizeDescription);
+    }
+
+    [TestMethod]
+    public async Task WheelOverPhotoZoomsAtPointerInsteadOfScrollingEditor()
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        model.Page = "editor";
+        model.ImageSource = "missing-test-photo.png";
+        model.SourceWidth = 400;
+        model.SourceHeight = 300;
+        using var document = app.CreateDocument();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+
+        Assert.IsTrue(document.DispatchWheel(100, 200, -50));
+
+        Assert.IsGreaterThan(1, model.Zoom);
+        Assert.AreNotEqual(0, model.PanX);
+    }
+
+    [TestMethod]
+    public async Task TwoPointersPinchPhotoWithoutCreatingMeasurement()
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        model.Page = "editor";
+        model.ImageSource = "missing-test-photo.png";
+        model.SourceWidth = 400;
+        model.SourceHeight = 300;
+        using var document = app.CreateDocument();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+
+        Assert.IsTrue(document.DispatchPointer(10, PointerPhase.Down, 120, 220));
+        Assert.IsTrue(document.DispatchPointer(11, PointerPhase.Down, 220, 220));
+        Assert.IsTrue(document.DispatchPointer(11, PointerPhase.Move, 270, 220));
+
+        Assert.AreEqual(1.5, model.Zoom, 0.02);
+    }
+
+    [TestMethod]
+    public async Task MiddleButtonPansEvenWhileAddModeIsArmed()
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        model.Page = "editor";
+        model.ImageSource = "missing-test-photo.png";
+        model.SourceWidth = 400;
+        model.SourceHeight = 300;
+        model.Zoom = 2;
+        model.AddMode = true;
+        using var document = app.CreateDocument();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+
+        Assert.IsTrue(document.DispatchMiddlePointer(-1, PointerPhase.Down, 200, 220));
+        Assert.IsTrue(document.DispatchMiddlePointer(-1, PointerPhase.Move, 240, 250));
+
+        Assert.AreEqual(40, model.PanX, 0.1);
+        Assert.AreEqual(30, model.PanY, 0.1);
+        Assert.IsTrue(model.AddMode);
+    }
+
+    [TestMethod]
+    public void ViewportZoomKeepsAnchorFixedAndClampsAtActualSize()
+    {
+        var model = new EditorViewModel
+        {
+            ViewportWidth = 400,
+            ViewportHeight = 800,
+            SourceWidth = 400,
+            SourceHeight = 300
+        };
+
+        Assert.IsTrue(model.SetViewport(1, 0, 0, 100, 200, 100, 200, 2));
+        var anchored = model.PointerToImage(100, 200);
+        Assert.AreEqual(0.25, anchored.X, 0.001);
+
+        Assert.IsTrue(model.SetViewport(model.Zoom, model.PanX, model.PanY, 100, 200, 100, 200, 0.2));
+        Assert.AreEqual(1, model.Zoom, 0.001);
+        Assert.AreEqual(0, model.PanX, 0.001);
+        Assert.AreEqual(0, model.PanY, 0.001);
     }
 
     [TestMethod]

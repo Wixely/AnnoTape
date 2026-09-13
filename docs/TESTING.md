@@ -15,6 +15,7 @@ The following work remains owned by the release tester (owner: TBD):
 - picker and camera return must show the selected editor after the one-shot graphics-host recreation, never a black surface
 - small, typical, and large source images; low-storage export failure; cancelled share
 - one-finger pan, two-finger zoom, line creation, endpoint/label drag, and repeated grabs
+- desktop wheel zoom anchored at the cursor and middle-button grab/pan
 - source-to-export annotation alignment at 90°, 180°, and 270° orientation
 - TalkBack-only capture, edit, delete, undo, export, and return workflow
 - font scaling, cutouts, gesture navigation, keyboard reachability, and 44–48 dp touch targets

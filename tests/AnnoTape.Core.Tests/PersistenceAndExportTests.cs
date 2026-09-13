@@ -133,6 +133,36 @@ public sealed class PersistenceAndExportTests
     }
 
     [TestMethod]
+    public async Task ShareSizeExportLimitsLongestEdgeWhileFullSizeRemainsOriginal()
+    {
+        var sourcePath = Path.Combine(_directory, "large-source.png");
+        using (var bitmap = new SKBitmap(800, 400))
+        {
+            bitmap.Erase(SKColors.White);
+            using var image = SKImage.FromBitmap(bitmap);
+            using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+            using var output = File.Create(sourcePath);
+            encoded.SaveTo(output);
+        }
+        var document = new PhotoDocument { SourcePath = sourcePath, PixelWidth = 800, PixelHeight = 400 };
+
+        await using var fullDestination = new MemoryStream();
+        await new AnnotationExporter().ExportAsync(document, fullDestination, new ExportOptions(ExportFormat.Png));
+        fullDestination.Position = 0;
+        using var full = SKBitmap.Decode(fullDestination);
+        Assert.AreEqual(800, full.Width);
+        Assert.AreEqual(400, full.Height);
+
+        await using var shareDestination = new MemoryStream();
+        await new AnnotationExporter().ExportAsync(document, shareDestination,
+            new ExportOptions(ExportFormat.Png, MaxDimension: 200));
+        shareDestination.Position = 0;
+        using var share = SKBitmap.Decode(shareDestination);
+        Assert.AreEqual(200, share.Width);
+        Assert.AreEqual(100, share.Height);
+    }
+
+    [TestMethod]
     public async Task ExportUsesTheAnnotationsArbitraryColour()
     {
         var sourcePath = Path.Combine(_directory, "colour-source.png");

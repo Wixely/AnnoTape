@@ -10,7 +10,11 @@ public enum ExportFormat
     Png
 }
 
-public sealed record ExportOptions(ExportFormat Format, int JpegQuality = 92, bool IncludeProjectDetails = false);
+public sealed record ExportOptions(
+    ExportFormat Format,
+    int JpegQuality = 92,
+    bool IncludeProjectDetails = false,
+    int? MaxDimension = null);
 
 public sealed class AnnotationExporter
 {
@@ -26,14 +30,20 @@ public sealed class AnnotationExporter
 
         var rotation = ((document.RotationDegrees % 360) + 360) % 360;
         var rotated = rotation is 90 or 270;
-        var outputWidth = rotated ? sourceImage.Height : sourceImage.Width;
-        var outputHeight = rotated ? sourceImage.Width : sourceImage.Height;
+        var sourceWidth = rotated ? sourceImage.Height : sourceImage.Width;
+        var sourceHeight = rotated ? sourceImage.Width : sourceImage.Height;
+        var scale = options.MaxDimension is > 0 and var maxDimension
+            ? Math.Min(1d, maxDimension / (double)Math.Max(sourceWidth, sourceHeight))
+            : 1d;
+        var outputWidth = Math.Max(1, (int)Math.Round(sourceWidth * scale));
+        var outputHeight = Math.Max(1, (int)Math.Round(sourceHeight * scale));
         using var surface = SKSurface.Create(new SKImageInfo(outputWidth, outputHeight, SKColorType.Rgba8888, SKAlphaType.Premul))
             ?? throw new InvalidOperationException("Could not allocate the export surface.");
         var canvas = surface.Canvas;
         canvas.Clear(SKColors.White);
         canvas.Save();
-        ApplySourceRotation(canvas, rotation, outputWidth, outputHeight);
+        canvas.Scale((float)(outputWidth / (double)sourceWidth), (float)(outputHeight / (double)sourceHeight));
+        ApplySourceRotation(canvas, rotation, sourceWidth, sourceHeight);
         canvas.DrawImage(sourceImage, 0, 0);
         canvas.Restore();
 

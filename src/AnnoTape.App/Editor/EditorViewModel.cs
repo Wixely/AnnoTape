@@ -28,6 +28,8 @@ public sealed partial class EditorViewModel
     public string AddButtonClass => AddMode ? "add-measurement active" : "add-measurement";
     public string AddButtonLabel => AddMode ? "Drawing…" : "Add";
     public bool ExportShelfOpen { get; set; }
+    public bool ExportFullSize { get; set; } = true;
+    public string ExportSizeDescription => ExportFullSize ? "Original pixel dimensions" : "Share size · max 2048 px";
     public string MeasurementText { get; set; } = "1000";
     public string MeasurementLabel { get; set; } = "";
     public string UnitName { get; set; } = nameof(MeasurementUnit.Millimetres);
@@ -81,6 +83,27 @@ public sealed partial class EditorViewModel
         var unscaledX = (x - centreX - PanX) / Zoom + centreX;
         var unscaledY = (y - centreY - PanY) / Zoom + centreY;
         return ImageGeometry.ToNormalized(unscaledX, unscaledY, frame);
+    }
+
+    public bool SetViewport(double baseZoom, double basePanX, double basePanY,
+        double anchorX, double anchorY, double targetX, double targetY, double requestedZoom)
+    {
+        var zoom = Math.Clamp(requestedZoom, 1, 8);
+        var frame = BaseImageRect;
+        var centreX = frame.X + frame.Width / 2d;
+        var centreY = frame.Y + frame.Height / 2d;
+        var ratio = zoom / Math.Max(0.001, baseZoom);
+        var panX = targetX - centreX - ratio * (anchorX - centreX - basePanX);
+        var panY = targetY - centreY - ratio * (anchorY - centreY - basePanY);
+        var maxPanX = frame.Width * (zoom - 1) / 2d;
+        var maxPanY = frame.Height * (zoom - 1) / 2d;
+        panX = Math.Clamp(panX, -maxPanX, maxPanX);
+        panY = Math.Clamp(panY, -maxPanY, maxPanY);
+        var changed = Math.Abs(Zoom - zoom) > 0.0001 || Math.Abs(PanX - panX) > 0.01 || Math.Abs(PanY - panY) > 0.01;
+        Zoom = zoom;
+        PanX = panX;
+        PanY = panY;
+        return changed;
     }
 
     public NormalizedPoint LabelAnchorFor(NormalizedPoint start, NormalizedPoint end, double labelWidth = 88)

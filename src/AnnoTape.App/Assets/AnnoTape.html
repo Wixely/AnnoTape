@@ -88,6 +88,10 @@
   <cupri-shelf class="export-shelf" open="{{ExportShelfOpen}}" blur="true" aria-label="Export image">
     <div class="shelf-title">Export image</div>
     <div class="shelf-copy">Choose the format for the annotated photo.</div>
+    <div class="export-resolution">
+      <div><b>Full resolution</b><span>{{ExportSizeDescription}}</span></div>
+      <cupri-switch checked="{{ExportFullSize}}" aria-label="Export at original image resolution"></cupri-switch>
+    </div>
     <div class="export-options">
       <cupri-button class="export-option export-png" aria-label="Export PNG, lossless quality">
         <b>PNG</b><span>Lossless · best for labels</span>
