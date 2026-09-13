@@ -4,6 +4,8 @@ AnnoTape is an offline Android measurement notebook with a Windows desktop host 
 
 The entered value is authoritative. AnnoTape does not infer physical dimensions from ordinary photo pixels and never labels pixel-derived values as measurements.
 
+![AnnoTape measuring a room alcove](docs/images/annotape-alcove-demo.png)
+
 ## Current state
 
 The architecture spike and testable MVP are implemented. The portable editor, SQLite persistence, recovery state, camera/photo-picker boundary, and full-resolution PNG/JPEG export compile. Automated tests pass. Camera interoperability, process-death return, gestures, memory limits, and TalkBack still require representative Android hardware before a release claim.

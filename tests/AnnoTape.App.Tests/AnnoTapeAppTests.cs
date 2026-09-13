@@ -122,6 +122,57 @@ public sealed class AnnoTapeAppTests
     }
 
     [TestMethod]
+    public async Task ReadmeDemoRendersARealAlcoveMeasurement()
+    {
+        var sourcePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
+            "..", "..", "..", "..", "..", "artwork", "demo", "room-alcove.png"));
+        Assert.IsTrue(File.Exists(sourcePath), sourcePath);
+
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        model.Page = "editor";
+        model.ProjectTitle = "Living room alcove";
+        model.ProjectLocation = "Reception room";
+        model.ProjectNotes = "Joinery opening";
+        model.Status = "Measurement saved";
+        model.ImageSource = sourcePath;
+        model.SourceWidth = 1536;
+        model.SourceHeight = 1024;
+        model.ViewportWidth = 400;
+        model.ViewportHeight = 800;
+        model.HasSelection = true;
+        model.MeasurementText = "1840";
+        model.SelectionSummary = "Selected: 1840 mm";
+
+        var annotation = new DimensionAnnotation
+        {
+            Start = new(0.25, 0.61),
+            End = new(0.75, 0.61),
+            LabelAnchor = new(0.5, 0.61),
+            DisplayText = "1840",
+            NormalizedMillimetres = 1840,
+            Unit = MeasurementUnit.Millimetres,
+            ColourHex = AnnotationColours.Copper
+        };
+        var frame = model.BaseImageRect;
+        model.AnnotationViews =
+        [
+            AnnotationViewModel.From(annotation, selected: true, frame.Width, frame.Height)
+        ];
+
+        using var document = app.CreateDocument();
+        Assert.IsTrue(document.Settle(400, 800));
+        using var image = document.RenderToImage(400, 800, app.Background);
+        SaveSnapshotIfRequested(image, "annotape-alcove-demo.png");
+
+        Assert.AreEqual(400, image.Width);
+        Assert.AreEqual(800, image.Height);
+        Assert.IsNotNull(Find(document.Root, node => node.Element?.ClassList.Contains("dimension-line") == true));
+        Assert.IsNotNull(Find(document.Root, node => node.Element?.ClassList.Contains("measure-label") == true));
+    }
+
+    [TestMethod]
     [DataRow(320, 720)]
     [DataRow(400, 800)]
     [DataRow(800, 400)]
