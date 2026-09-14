@@ -41,6 +41,9 @@ public sealed class AnnoTapeApp : CupriApp
     public AnnoTapeApp(IPlatformCapabilities platform)
     {
         _platform = platform;
+        _storage = new CrashSafeStorage(platform.AppDataPath);
+        _storage.Initialize();
+        _storage.CleanAbandonedStaging(TimeSpan.FromDays(1));
         _platform.ExternalPhotoCompleted += selection =>
         {
             if (selection is not null) RunDetached(async () =>
@@ -49,9 +52,12 @@ public sealed class AnnoTapeApp : CupriApp
                 await AcceptSelectionAsync(selection);
             });
         };
-        _storage = new CrashSafeStorage(platform.AppDataPath);
-        _storage.Initialize();
-        _storage.CleanAbandonedStaging(TimeSpan.FromDays(1));
+        _platform.ExternalPhotoFailed += message =>
+        {
+            _storage.ClearPending();
+            _model.Status = $"Import failed: {message}";
+            ScheduleRefresh();
+        };
         _repository = new ProjectRepository(Path.Combine(platform.AppDataPath, "annotape.db"));
         _model.Status = "Starting storage…";
         _initialization = Task.Run(InitializeApplicationAsync);
@@ -560,8 +566,19 @@ public sealed class AnnoTapeApp : CupriApp
             await using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
                 await _exporter.ExportAsync(photo, stream,
                     new ExportOptions(format, MaxDimension: _model.ExportFullSize ? null : 2048));
-            await _platform.ShareFileAsync(path, format == ExportFormat.Png ? "image/png" : "image/jpeg");
-            _model.Status = _model.ExportFullSize ? "Full-resolution export ready to share" : "Share-size export ready";
+            var contentType = format == ExportFormat.Png ? "image/png" : "image/jpeg";
+            if (_model.ExportShare)
+            {
+                await _platform.ShareFileAsync(path, contentType);
+                _model.Status = _model.ExportFullSize ? "Full-resolution export ready to share" : "Share-size export ready";
+            }
+            else
+            {
+                var saved = await _platform.SaveFileAsync(path, Path.GetFileName(path), contentType);
+                _model.Status = saved
+                    ? _model.ExportFullSize ? "Full-resolution export saved" : "Share-size export saved"
+                    : "Save cancelled";
+            }
         }
         catch (Exception exception)
         {

@@ -18,12 +18,16 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
 {
     private const int PickRequest = 4101;
     private const int CameraRequest = 4102;
+    private const int SaveRequest = 4103;
     private const string ProviderAuthority = "app.annotape.mobile.files";
     private const string CameraPathKey = "camera_path";
     private readonly Activity _activity = activity;
     private TaskCompletionSource<PhotoSelection?>? _photoCompletion;
+    private TaskCompletionSource<bool>? _saveCompletion;
+    private string? _pendingSavePath;
 
     public event Action<PhotoSelection?>? ExternalPhotoCompleted;
+    public event Action<string>? ExternalPhotoFailed;
     public string AppDataPath => _activity.FilesDir?.AbsolutePath ?? throw new InvalidOperationException("Android app storage is unavailable.");
     private ISharedPreferences Preferences => _activity.GetPreferences(FileCreationMode.Private) ?? throw new InvalidOperationException("Android preferences are unavailable.");
 
@@ -31,7 +35,7 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
     {
         EnsureNoOperation();
         var intent = OperatingSystem.IsAndroidVersionAtLeast(33)
-            ? new Intent(MediaStore.ActionPickImages)
+            ? new Intent(MediaStore.ActionPickImages).SetType("image/*")
             : new Intent(Intent.ActionOpenDocument).SetType("image/*").AddCategory(Intent.CategoryOpenable);
         _photoCompletion = NewCompletion(cancellationToken);
         _activity.StartActivityForResult(intent, PickRequest);
@@ -71,6 +75,38 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
         send.ClipData = ClipData.NewRawUri("AnnoTape export", uri);
         _activity.StartActivity(Intent.CreateChooser(send, "Share annotated image"));
         return Task.CompletedTask;
+    }
+
+    public Task<bool> SaveFileAsync(
+        string path,
+        string suggestedName,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureNoOperation();
+        if (!System.IO.File.Exists(path)) throw new FileNotFoundException("The exported image is unavailable.", path);
+
+        var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (cancellationToken.CanBeCanceled)
+            cancellationToken.Register(() => completion.TrySetCanceled(cancellationToken));
+        _saveCompletion = completion;
+        _pendingSavePath = path;
+        try
+        {
+            var intent = new Intent(Intent.ActionCreateDocument)
+                .SetType(contentType)
+                .AddCategory(Intent.CategoryOpenable);
+            intent.PutExtra(Intent.ExtraTitle, suggestedName);
+            _activity.StartActivityForResult(intent, SaveRequest);
+            return completion.Task;
+        }
+        catch
+        {
+            _saveCompletion = null;
+            _pendingSavePath = null;
+            throw;
+        }
     }
 
     public Task<string> PrepareDisplayImageAsync(
@@ -134,8 +170,14 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
 
     internal void HandleActivityResult(int requestCode, Result resultCode, Intent? data)
     {
+        if (requestCode == SaveRequest)
+        {
+            HandleSaveResult(resultCode, data?.Data);
+            return;
+        }
         if (requestCode is not (PickRequest or CameraRequest)) return;
         PhotoSelection? selection = null;
+        Exception? failure = null;
         try
         {
             if (resultCode == Result.Ok)
@@ -153,6 +195,10 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
                 }
             }
         }
+        catch (Exception exception)
+        {
+            failure = exception;
+        }
         finally
         {
             if (requestCode == CameraRequest)
@@ -163,21 +209,66 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
             }
             var completion = _photoCompletion;
             _photoCompletion = null;
-            if (completion is not null) completion.TrySetResult(selection);
+            if (completion is not null)
+            {
+                if (failure is not null) completion.TrySetException(failure);
+                else completion.TrySetResult(selection);
+            }
+            else if (failure is not null) ExternalPhotoFailed?.Invoke(failure.Message);
             else ExternalPhotoCompleted?.Invoke(selection);
         }
+    }
+
+    private void HandleSaveResult(Result resultCode, Uri? destination)
+    {
+        var completion = _saveCompletion;
+        var sourcePath = _pendingSavePath;
+        _saveCompletion = null;
+        _pendingSavePath = null;
+        if (completion is null) return;
+        if (resultCode != Result.Ok)
+        {
+            completion.TrySetResult(false);
+            return;
+        }
+        if (destination is null || string.IsNullOrWhiteSpace(sourcePath))
+        {
+            completion.TrySetException(new IOException("The save destination was unavailable."));
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var resolver = _activity.ContentResolver ?? throw new InvalidOperationException("Android content resolver is unavailable.");
+                await using var source = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous);
+                await using var output = resolver.OpenOutputStream(destination, "w")
+                    ?? throw new IOException("The selected destination could not be opened.");
+                await source.CopyToAsync(output);
+                await output.FlushAsync();
+                completion.TrySetResult(true);
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+        });
     }
 
     private PhotoSelection DescribeUri(Uri uri)
     {
         var resolver = _activity.ContentResolver ?? throw new InvalidOperationException("Android content resolver is unavailable.");
+        var mime = resolver.GetType(uri);
+        if (!string.IsNullOrWhiteSpace(mime) && !mime.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Choose a supported image file; videos cannot be measured.");
         var name = QueryName(uri) ?? "photo";
         using var dimensionsStream = resolver.OpenInputStream(uri) ?? throw new IOException("The selected photo could not be opened.");
         var (width, height) = ReadDimensions(dimensionsStream);
         using var orientationStream = resolver.OpenInputStream(uri) ?? throw new IOException("The selected photo could not be opened.");
         var rotation = ReadRotation(orientationStream);
         var extension = Path.GetExtension(name);
-        if (string.IsNullOrWhiteSpace(extension)) extension = MimeToExtension(resolver.GetType(uri));
+        if (string.IsNullOrWhiteSpace(extension)) extension = MimeToExtension(mime);
         return new(name, extension, width, height, rotation, _ =>
             Task.FromResult<Stream>(resolver.OpenInputStream(uri) ?? throw new IOException("The selected photo is no longer available.")));
     }
@@ -204,7 +295,8 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
     {
         var options = new BitmapFactory.Options { InJustDecodeBounds = true };
         BitmapFactory.DecodeStream(stream, null, options);
-        if (options.OutWidth <= 0 || options.OutHeight <= 0) throw new InvalidDataException("The image dimensions are invalid.");
+        if (options.OutWidth <= 0 || options.OutHeight <= 0)
+            throw new InvalidDataException("Choose a supported image file; videos and damaged files cannot be measured.");
         return (options.OutWidth, options.OutHeight);
     }
 
@@ -242,6 +334,7 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
 
     private void EnsureNoOperation()
     {
-        if (_photoCompletion is not null) throw new InvalidOperationException("A photo request is already open.");
+        if (_photoCompletion is not null || _saveCompletion is not null)
+            throw new InvalidOperationException("A photo or file request is already open.");
     }
 }

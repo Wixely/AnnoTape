@@ -14,6 +14,12 @@ public sealed class DesktopPlatformCapabilities : IPlatformCapabilities
         remove { }
     }
 
+    public event Action<string>? ExternalPhotoFailed
+    {
+        add { }
+        remove { }
+    }
+
     public string AppDataPath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "AnnoTape",
@@ -86,6 +92,54 @@ public sealed class DesktopPlatformCapabilities : IPlatformCapabilities
         return Task.CompletedTask;
     }
 
+    public Task<bool> SaveFileAsync(
+        string path,
+        string suggestedName,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var extension = Path.GetExtension(suggestedName);
+                using var dialog = new SaveFileDialog
+                {
+                    Title = "Save annotated image",
+                    FileName = suggestedName,
+                    DefaultExt = extension.TrimStart('.'),
+                    Filter = contentType == "image/png" ? "PNG image|*.png" : "JPEG image|*.jpg;*.jpeg",
+                    AddExtension = true,
+                    OverwritePrompt = true
+                };
+                var pictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+                if (Directory.Exists(pictures)) dialog.InitialDirectory = pictures;
+                if (dialog.ShowDialog() != DialogResult.OK)
+                {
+                    completion.TrySetResult(false);
+                    return;
+                }
+                File.Copy(path, dialog.FileName, true);
+                completion.TrySetResult(true);
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "AnnoTape export saver"
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        if (cancellationToken.CanBeCanceled)
+            cancellationToken.Register(() => completion.TrySetCanceled(cancellationToken));
+        return completion.Task;
+    }
+
     private static Task<PhotoSelection?> ShowPhotoPickerAsync(CancellationToken cancellationToken)
     {
         var completion = new TaskCompletionSource<PhotoSelection?>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -96,7 +150,7 @@ public sealed class DesktopPlatformCapabilities : IPlatformCapabilities
                 using var dialog = new OpenFileDialog
                 {
                     Title = "Choose a photo for AnnoTape",
-                    Filter = "Image files|*.jpg;*.jpeg;*.png;*.webp;*.bmp|All files|*.*",
+                    Filter = "Image files|*.jpg;*.jpeg;*.png;*.webp;*.bmp",
                     CheckFileExists = true,
                     Multiselect = false
                 };
@@ -124,7 +178,7 @@ public sealed class DesktopPlatformCapabilities : IPlatformCapabilities
     {
         using var input = File.OpenRead(path);
         using var codec = SKCodec.Create(input)
-            ?? throw new InvalidDataException("The selected file is not a supported image.");
+            ?? throw new InvalidDataException("Choose a supported image file; videos and damaged files cannot be measured.");
         var rotation = codec.EncodedOrigin switch
         {
             SKEncodedOrigin.RightTop => 90,

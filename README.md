@@ -1,6 +1,6 @@
 # AnnoTape
 
-AnnoTape is an offline Android measurement notebook with a Windows desktop host for development and layout testing. Capture or choose a photo, draw optionally angle-snapped dimension lines over it, choose annotation colours and image-wide units, position attached or free labels, enter the real measurements, and export a full-resolution annotated image.
+AnnoTape is an offline Android measurement notebook with a Windows desktop host for development and layout testing. Capture or choose a photo, draw optionally angle-snapped dimension lines over it, choose annotation colours and image-wide units, position attached or free labels, enter the real measurements, and share or save an annotated image.
 
 The entered value is authoritative. AnnoTape does not infer physical dimensions from ordinary photo pixels and never labels pixel-derived values as measurements.
 
@@ -23,7 +23,7 @@ Version 0.1 uses one photo per project. The schema already supports ordered mult
 
 CupriFace currently requires Android CoreCLR (`UseMonoRuntime=false`). The .NET Android SDK describes CoreCLR as experimental, so this is an explicit pre-release constraint rather than a production-support claim.
 
-ReadyToRun is disabled for the APK because the Windows Android toolchain attempted to rewrite a mapped generated resource assembly (`NETSDK1096`). The resulting CoreCLR/JIT package builds reliably; startup and package-size measurements remain part of device acceptance.
+ReadyToRun is disabled for the APK because the Windows Android toolchain attempted to rewrite a mapped generated resource assembly (`NETSDK1096`). Release builds use conservative partial trimming: framework and SDK assemblies that explicitly support trimming are reduced, while AnnoTape and CupriFace's reflection-based bindings are not fully trimmed. The resulting CoreCLR/JIT package builds reliably; startup and package-size measurements remain part of device acceptance.
 
 ## Build and test
 
@@ -56,7 +56,7 @@ GitHub Actions runs the Release tests, builds the Windows desktop layout host, a
 downloadable ARM64 test-signed APK plus its SHA-256 checksum on every push and pull request. The
 workflow can also be started manually. The artifact is suitable for testing, not store release.
 
-For desktop layout testing, select **Run AnnoTape Desktop (layout testing)** in VS Code's Run and Debug view and press F5. The desktop Camera and Photo picker actions both open a local image picker; exported images open in the registered Windows image application. Scroll over the photo to zoom around the cursor, and hold the middle mouse button while moving to grab and pan it.
+For desktop layout testing, select **Run AnnoTape Desktop (layout testing)** in VS Code's Run and Debug view and press F5. The desktop Camera and Photo picker actions both open a local image picker. Exports can open in the registered Windows image application or be saved through the native file dialog. Scroll over the photo to zoom around the cursor, and hold the middle mouse button while moving to grab and pan it.
 
 Build an installable release APK with:
 

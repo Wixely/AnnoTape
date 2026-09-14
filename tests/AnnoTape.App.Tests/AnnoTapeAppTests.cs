@@ -213,6 +213,7 @@ public sealed class AnnoTapeAppTests
         var box = HitTesting.ScreenBox(exportButton);
         document.DispatchClick(box.X + box.W / 2, box.Y + box.H / 2);
         using var image = document.RenderToImage(400, 800, app.Background);
+        SaveSnapshotIfRequested(image, "export-sheet.png");
 
         Assert.IsNull(app.InitializationError);
         Assert.AreEqual(400, image.Width);
@@ -228,6 +229,39 @@ public sealed class AnnoTapeAppTests
         document.DispatchClick(switchBox.X + switchBox.W / 2, switchBox.Y + switchBox.H / 2);
         Assert.IsFalse(model.ExportFullSize);
         Assert.Contains("2048", model.ExportSizeDescription);
+        document.Refresh();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+
+        var destinationSwitch = Find(document.Root, node =>
+            node.Element?.ClassList.Contains("cupri-switch") == true &&
+            AttributeUp(node, "aria-label") == "Share export instead of saving to device");
+        Assert.IsNotNull(destinationSwitch);
+        var destinationBox = HitTesting.ScreenBox(destinationSwitch);
+        document.DispatchClick(destinationBox.X + destinationBox.W / 2, destinationBox.Y + destinationBox.H / 2);
+        Assert.IsFalse(model.ExportShare);
+        Assert.Contains("file location", model.ExportDestinationDescription);
+    }
+
+    [TestMethod]
+    public async Task InvalidPhotoSelectionBecomesAStatusMessage()
+    {
+        var platform = new FakePlatform(_directory)
+        {
+            PickFailure = new InvalidDataException("Choose a supported image file; videos cannot be measured.")
+        };
+        var app = new AnnoTapeApp(platform);
+        await app.Initialization;
+        using var document = app.CreateDocument();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+        var picker = Find(document.Root, node => node.Element?.ClassList.Contains("pick-photo") == true);
+        Assert.IsNotNull(picker);
+
+        var box = HitTesting.ScreenBox(picker);
+        document.DispatchClick(box.X + box.W / 2, box.Y + box.H / 2);
+        var model = (EditorViewModel)app.Model;
+        await WaitForAsync(() => model.Status.StartsWith("Import failed:", StringComparison.Ordinal));
+
+        Assert.Contains("videos cannot be measured", model.Status);
     }
 
     [TestMethod]
@@ -563,15 +597,26 @@ public sealed class AnnoTapeAppTests
         encoded.SaveTo(output);
     }
 
+    private static async Task WaitForAsync(Func<bool> predicate)
+    {
+        for (var attempt = 0; attempt < 200 && !predicate(); attempt++)
+            await Task.Delay(10);
+        Assert.IsTrue(predicate(), "The asynchronous operation did not complete in time.");
+    }
+
     private sealed class FakePlatform(string appDataPath) : IPlatformCapabilities
     {
 #pragma warning disable CS0067
         public event Action<PhotoSelection?>? ExternalPhotoCompleted;
+        public event Action<string>? ExternalPhotoFailed;
 #pragma warning restore CS0067
+        public Exception? PickFailure { get; init; }
         public string AppDataPath { get; } = appDataPath;
-        public Task<PhotoSelection?> PickPhotoAsync(CancellationToken cancellationToken = default) => Task.FromResult<PhotoSelection?>(null);
+        public Task<PhotoSelection?> PickPhotoAsync(CancellationToken cancellationToken = default) =>
+            PickFailure is null ? Task.FromResult<PhotoSelection?>(null) : Task.FromException<PhotoSelection?>(PickFailure);
         public Task<PhotoSelection?> CapturePhotoAsync(CancellationToken cancellationToken = default) => Task.FromResult<PhotoSelection?>(null);
         public Task<string> PrepareDisplayImageAsync(string sourcePath, int rotationDegrees, CancellationToken cancellationToken = default) => Task.FromResult(sourcePath);
         public Task ShareFileAsync(string path, string contentType, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<bool> SaveFileAsync(string path, string suggestedName, string contentType, CancellationToken cancellationToken = default) => Task.FromResult(true);
     }
 }

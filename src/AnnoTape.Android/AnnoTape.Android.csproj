@@ -6,16 +6,21 @@
     <TargetPlatformMinVersion>24.0</TargetPlatformMinVersion>
     <ApplicationId>app.annotape.mobile</ApplicationId>
     <ApplicationTitle>AnnoTape</ApplicationTitle>
-    <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>2</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.1</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <UseMonoRuntime>false</UseMonoRuntime>
-    <AndroidLinkMode>None</AndroidLinkMode>
     <!-- Crossgen2 on Windows can hold the generated Android resource assembly mapped while
          attempting to rewrite it (NETSDK1096). CoreCLR JIT is the verified CupriFace path, so
          keep release packaging deterministic and measure R2R separately before enabling it. -->
     <PublishReadyToRun>false</PublishReadyToRun>
     <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- Trim only assemblies that explicitly opt in. This removes unused framework/SDK code
+         without applying full trimming to CupriFace or AnnoTape's reflection-based bindings. -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../AnnoTape.App/AnnoTape.App.csproj" />

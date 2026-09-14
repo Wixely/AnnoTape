@@ -93,6 +93,10 @@
       <div><b>Full resolution</b><span>{{ExportSizeDescription}}</span></div>
       <cupri-switch checked="{{ExportFullSize}}" aria-label="Export at original image resolution"></cupri-switch>
     </div>
+    <div class="export-destination">
+      <div><b>Share after export</b><span>{{ExportDestinationDescription}}</span></div>
+      <cupri-switch checked="{{ExportShare}}" aria-label="Share export instead of saving to device"></cupri-switch>
+    </div>
     <div class="export-options">
       <cupri-button class="export-option export-png" aria-label="Export PNG, lossless quality">
         <b>PNG</b><span>Lossless · best for labels</span>

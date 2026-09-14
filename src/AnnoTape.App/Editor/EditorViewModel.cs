@@ -30,6 +30,8 @@ public sealed partial class EditorViewModel
     public bool ExportShelfOpen { get; set; }
     public bool ExportFullSize { get; set; } = true;
     public string ExportSizeDescription => ExportFullSize ? "Original pixel dimensions" : "Share size · max 2048 px";
+    public bool ExportShare { get; set; } = true;
+    public string ExportDestinationDescription => ExportShare ? "Open the share sheet" : "Choose a file location";
     public string MeasurementText { get; set; } = "1000";
     public string MeasurementLabel { get; set; } = "";
     public string UnitName { get; set; } = nameof(MeasurementUnit.Millimetres);
