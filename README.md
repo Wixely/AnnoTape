@@ -1,5 +1,7 @@
 # AnnoTape
 
+<p align="center"><img src="docs/images/annotape-icon.png" width="128" alt="AnnoTape app icon"></p>
+
 AnnoTape is an offline Android measurement notebook with a Windows desktop host for development and layout testing. Capture or choose a photo, draw optionally angle-snapped dimension lines over it, choose annotation colours and image-wide units, position attached or free labels, enter the real measurements, and share or save an annotated image.
 
 The entered value is authoritative. AnnoTape does not infer physical dimensions from ordinary photo pixels and never labels pixel-derived values as measurements.
@@ -10,13 +12,13 @@ The entered value is authoritative. AnnoTape does not infer physical dimensions 
 
 The architecture spike and testable MVP are implemented. The portable editor, SQLite persistence, recovery state, camera/photo-picker boundary, and full-resolution PNG/JPEG export compile. Automated tests pass. Camera interoperability, process-death return, gestures, memory limits, and TalkBack still require representative Android hardware before a release claim.
 
-Version 0.1 uses one photo per project. The schema already supports ordered multi-photo projects, so adding a document navigator does not require a migration.
+The 0.2 alpha uses one photo per project. The schema already supports ordered multi-photo projects, so adding a document navigator does not require a migration.
 
 ## Stack
 
 - C# and .NET 10
 - Plain .NET for Android (no MAUI, WebView, JavaScript, or browser shell)
-- [CupriFace](https://github.com/Wixely/CupriFace) engine/shell `0.24.1-annotape.4` from pinned source; Android host `0.24.0`
+- [CupriFace](https://github.com/Wixely/CupriFace) engine, shell, and Android host `0.24.1-annotape.5` from pinned source
 - SQLite with Dapper and DnaX `10.0.0-alpha.2` checksummed migrations
 - SkiaSharp source-resolution export
 - Minimum Android API 24; Android 13+ uses the system photo picker and earlier releases use `ACTION_OPEN_DOCUMENT`
@@ -33,7 +35,7 @@ Prerequisites are .NET SDK `10.0.300`, the .NET Android workload, and a clean Dn
 git/
   AnnoTape/
   DnaX/        # commit ab1471dd0caa3775f3bd26f9f12bf04d7df8752e
-  CupriFace/   # commit 9e4d6208450b777f0bfe361baa1f34d1a89acd7c
+  CupriFace/   # commit 0cc37412c59994f2f4d029a73222886e71ef7210
 ```
 
 Then run:
@@ -47,10 +49,9 @@ dotnet build src\AnnoTape.Desktop\AnnoTape.Desktop.csproj -c Debug
 dotnet build src\AnnoTape.Android\AnnoTape.Android.csproj -c Debug
 ```
 
-The preparation scripts populate the ignored repository-local `.packages` feed. DnaX and the
-CupriFace engine/shell are built from pinned checkouts; the unchanged CupriFace Android host is
-downloaded from the official `0.24.0` release and verified by SHA-256. Pass `-DnaXRoot` or
-`-CupriFaceRoot` when either checkout is elsewhere.
+The preparation scripts populate the ignored repository-local `.packages` feed. DnaX and all three
+CupriFace packages are built from pinned checkouts. Pass `-DnaXRoot` or `-CupriFaceRoot` when either
+checkout is elsewhere.
 
 GitHub Actions runs the Release tests, builds the Windows desktop layout host, and publishes a
 downloadable ARM64 test-signed APK plus its SHA-256 checksum on every push and pull request. The

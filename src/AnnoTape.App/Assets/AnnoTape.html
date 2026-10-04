@@ -3,27 +3,28 @@
     <main class="home" style="display:{{HomeDisplay}}">
       <div class="brand"><cupri-image class="mark" src="Assets/annotape-icon.png" alt=""></cupri-image><div><h1>AnnoTape</h1><span>annotate + tape measure</span></div></div>
       <div class="hero">
-        <span class="eyebrow">PHOTO MEASUREMENT</span>
+        <span class="eyebrow">PHOTO MEASUREMENT NOTEBOOK</span>
         <h2>Measure what matters.</h2>
         <p>Capture a photo, draw a dimension, and enter the real value. Your work stays on this device.</p>
         <cupri-button class="take-photo primary" aria-label="Take a photo"><span class="button-label">Take photo</span></cupri-button>
         <cupri-button class="pick-photo" variant="ghost" aria-label="Choose a photo"><span class="button-label">Choose photo</span></cupri-button>
+        <div class="hero-notes" aria-label="One photo per project, real values, offline"><span>ONE PHOTO</span><span>REAL VALUES</span><span>OFFLINE</span></div>
       </div>
       <div class="recent">
         <div class="section-title"><b>Recent projects</b><span>LOCAL</span></div>
         <span>{{RecentSummary}}</span>
         <div class="recent-row" data-repeat="RecentProjects" data-open-project="{{Id}}" role="button" aria-label="Open {{Title}}">
-          <b>{{Title}}</b><span>{{Subtitle}}</span>
+          <div class="recent-copy"><b>{{Title}}</b><span>{{Subtitle}}</span></div><span class="recent-open">Open</span>
         </div>
       </div>
       <p class="privacy">Offline by design · no account · no inferred measurements</p>
     </main>
 
     <main class="editor" style="display:{{EditorDisplay}}">
-      <header>
+      <header class="topbar">
         <cupri-button class="back-home" variant="ghost" aria-label="Back to projects">‹</cupri-button>
         <cupri-textfield class="title" value="{{ProjectTitle}}" aria-label="Project title"></cupri-textfield>
-        <span class="save-state">{{SaveState}}</span>
+        <span class="save-state"><span class="save-indicator" aria-hidden="true"></span>{{SaveState}}</span>
       </header>
 
       <div class="stage" data-editor="photo editor" aria-label="Photo editor. Pinch to zoom or drag to pan.">
@@ -65,6 +66,7 @@
           <cupri-color class="line-colour" value="{{LineColour}}" open="{{ColourOpen}}" aria-label="Measurement colour"></cupri-color>
         </div>
         <div class="selection" style="display:{{InspectorDisplay}}">
+          <div class="selection-heading"><b>Measurement details</b><span>Enter the real-world value</span></div>
           <div class="selection-label">
             <cupri-textfield class="label-input" value="{{MeasurementLabel}}" placeholder="Label (optional)" aria-label="Measurement label"></cupri-textfield>
           </div>
@@ -87,6 +89,7 @@
   </div>
 
   <cupri-shelf class="export-shelf" open="{{ExportShelfOpen}}" blur="true" aria-label="Export image">
+    <div class="shelf-eyebrow">READY TO SHARE</div>
     <div class="shelf-title">Export image</div>
     <div class="shelf-copy">Choose the format for the annotated photo.</div>
     <div class="export-resolution">

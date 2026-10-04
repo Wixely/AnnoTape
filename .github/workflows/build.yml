@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: Wixely/CupriFace
-          ref: 9e4d6208450b777f0bfe361baa1f34d1a89acd7c
+          ref: 0cc37412c59994f2f4d029a73222886e71ef7210
           path: external/CupriFace
           persist-credentials: false
 

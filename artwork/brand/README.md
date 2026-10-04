@@ -1,19 +1,21 @@
 # AnnoTape brand artwork
 
-The PNG files in this directory are the full-resolution masters generated with OpenAI's built-in image generation tool on 2026-09-13. Optimized application copies live in `src/AnnoTape.App/Assets`.
+The PNG files in this directory are the full-resolution masters generated with OpenAI's built-in image generation tool. Optimized application copies live in `src/AnnoTape.App/Assets`. The app icon was regenerated on 2026-10-04 for Android adaptive-icon masks.
 
 ## App icon prompt
 
 ```text
 Use case: logo-brand
 Asset type: master app icon for Android launcher, Windows taskbar, and in-app brand mark
-Primary request: create a polished square icon for AnnoTape, a photo measurement and annotation app. Show a single bold abstract dimension line with two circular endpoint handles and a subtle tape-measure or annotation-tag silhouette, forming a memorable geometric symbol.
-Style/medium: crisp vector-like flat graphic rendered as a high-resolution raster; minimal, modern, professional utility app
-Composition/framing: centered symbol, generous safe area, strong silhouette readable at 24px, rounded-square dark graphite background filling the canvas
-Color palette: near-black graphite #09090B, AnnoTape red #E32636, warm copper #B87333, tiny white highlight only if needed
-Lighting/mood: flat with very restrained depth, confident and precise
-Constraints: no words, no letters, no numbers, no ruler tick labels, no mockup device, no external background, no watermark; exact square composition; avoid thin fragile lines; keep all important content inside the central 70% safe zone
+Primary request: create a cleaner, more iconic AnnoTape mark combining a compact tape-measure silhouette with one diagonal dimension line and two endpoint dots.
+Style/medium: crisp flat vector-like graphic rendered as a high-resolution square raster; minimal professional utility-app identity
+Composition/framing: full-bleed graphite background with no inset tile or frame; centered compact symbol; all important content inside the central safe zone so it remains balanced under circular, squircle, and rounded-square masks; strong silhouette readable at 24px
+Color palette: near-black graphite #09090B, coral red #EF3348, warm copper #C97935, tiny warm-white endpoint highlights
+Lighting/mood: restrained depth, confident and precise
+Constraints: no words, letters, numbers, ruler markings, external border, mockup device, or watermark; avoid thin lines, tiny details, and edge protrusions
 ```
+
+The Android launcher uses matching vector foreground and monochrome resources so circular masks and Android 13+ themed icons retain the same compact silhouette.
 
 ## Empty-state illustration prompt
 

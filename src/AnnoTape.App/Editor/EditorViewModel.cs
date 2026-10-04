@@ -12,7 +12,7 @@ public sealed partial class EditorViewModel
     private const double HeaderHeight = 60;
     private const double EmptyInspectorHeight = 96;
     private const double CompactInspectorHeight = 198;
-    private const double SelectionInspectorHeight = 346;
+    private const double SelectionInspectorHeight = 364;
 
     public string Page { get; set; } = "home";
     public string HomeDisplay => Page == "home" ? "flex" : "none";
