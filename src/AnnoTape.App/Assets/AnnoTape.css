@@ -48,7 +48,7 @@ cupri-button { min-height:48px; }
 /* Editor */
 .editor { position:relative; width:100%; height:100vh; flex-direction:column; overflow:scroll; background:#050403; }
 .topbar {
-  height:60px; min-height:60px; display:flex; align-items:center; gap:8px; padding:7px 8px;
+  height:60px; min-height:60px; display:flex; align-items:center; gap:8px; padding:7px 16px 7px 8px;
   background:#0d0b0a; box-shadow:0 1px 0 #6d3b21,0 7px 20px #00000070;
 }
 .title { flex:1; min-width:80px; }
@@ -75,7 +75,8 @@ cupri-button { min-height:48px; }
   position:absolute; left:13px; top:13px; width:18px; height:18px; border-radius:9px;
   background:#b87333; border:2px solid #09090b; box-shadow:0 1px 5px #000;
 }
-.measure-label { position:absolute; min-height:44px; min-width:44px; padding:9px 12px; border-radius:10px; background:#0b0908f2; color:#b87333; font-weight:bold; white-space:nowrap; border:1px solid #b87333; box-shadow:0 4px 14px #00000099; }
+.label-handle { position:absolute; width:44px; height:44px; transform-origin:center center; }
+.measure-label { position:absolute; left:22px; top:22px; min-height:44px; min-width:44px; padding:10px; display:flex; align-items:center; justify-content:center; border-radius:10px; line-height:22px; text-align:center; transform-origin:center center; background:#0b0908f2; color:#b87333; font-weight:bold; white-space:nowrap; border:1px solid #b87333; box-shadow:0 4px 14px #00000099; }
 .dimension-line.selected { box-shadow:0 0 0 2px #fff,0 0 12px #fff; }
 .measure-label.selected { box-shadow:0 0 0 2px #fff,0 0 12px #fff; }
 
@@ -86,13 +87,16 @@ cupri-button { min-height:48px; }
 }
 .inspector.empty-project { height:96px; min-height:96px; }
 .inspector.has-selection { height:364px; min-height:364px; }
-.tools,.draw-options,.snap-option,.selection,.selection-heading,.selection-label,.selection-value,.selection-actions,.status-row { display:flex; align-items:center; gap:6px; }
+.tools,.draw-options,.snap-option,.label-scale-option,.selection,.selection-heading,.selection-label,.selection-value,.selection-actions,.status-row { display:flex; align-items:center; gap:6px; }
 .tools { width:100%; }
 .draw-options { width:100%; min-height:44px; }
 .snap-option { flex:none; min-width:82px; color:#d9d0c9; font-size:12px; }
 .snap-option span { flex:1; }
 .global-unit { flex:0.7; width:0; min-width:0; }
 .global-unit .cupri-select-trigger { width:100%; min-width:0; min-height:40px; padding:7px 9px; }
+.label-scale-option { flex:none; width:112px; color:#d9d0c9; font-size:11px; gap:4px; }
+.label-scale { flex:1; width:0; min-width:0; }
+.label-scale .cupri-select-trigger { width:100%; min-width:0; min-height:40px; padding:7px 7px; }
 .line-colour { flex:1; width:0; min-width:0; }
 .line-colour .cupri-color-trigger { width:100%; min-width:0; min-height:40px; padding:7px 10px; background:#161310; border-color:#3b342f; }
 .selection { width:100%; flex-direction:column; align-items:stretch; }
@@ -107,8 +111,9 @@ cupri-button { min-height:48px; }
 .back-home.cupri-button {
   flex:none; width:48px; height:46px; min-height:46px; padding:0; border-radius:12px;
   display:flex; align-items:center; justify-content:center; background:#21140d; border:1px solid #5e3822;
-  color:#e79151; font-size:24px; box-shadow:none;
+  color:#e79151; box-shadow:none;
 }
+.back-chevron { display:block; line-height:1; font-size:24px; transform:translateY(-2px); }
 .tools.cupri-toolbar {
   width:100%; min-width:0; padding:5px; gap:5px; border-radius:11px;
   background:#13110f; border:1px solid #332e2a;
@@ -168,6 +173,11 @@ cupri-button { min-height:48px; }
   .tools .cupri-toolbar-group { gap:3px; }
   .tools .cupri-button { padding:12px 6px 2px; font-size:10px; }
   .tools .add-measurement { min-width:70px; }
+  .snap-option { min-width:48px; }
+  .snap-option > span { display:none; }
+  .global-unit { flex:none; width:58px; }
+  .label-scale-option { width:72px; }
+  .label-scale-option > span { display:none; }
   .selection-summary { display:none; }
   .export-option span { white-space:normal; }
 }

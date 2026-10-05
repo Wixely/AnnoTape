@@ -18,7 +18,7 @@ public sealed partial class EditorViewModel
     public string HomeDisplay => Page == "home" ? "flex" : "none";
     public string EditorDisplay => Page == "editor" ? "flex" : "none";
     public string Status { get; set; } = "Ready";
-    public string ProjectTitle { get; set; } = "Untitled measurement";
+    public string ProjectTitle { get; set; } = DefaultProjectTitle(DateTimeOffset.Now);
     public string ProjectNotes { get; set; } = "";
     public string ProjectLocation { get; set; } = "";
     public string ImageSource { get; set; } = "";
@@ -36,6 +36,8 @@ public sealed partial class EditorViewModel
     public string MeasurementLabel { get; set; } = "";
     public string UnitName { get; set; } = nameof(MeasurementUnit.Millimetres);
     public bool UnitOpen { get; set; }
+    public string LabelScaleMode { get; set; } = LabelScaleModes.Auto;
+    public bool LabelScaleOpen { get; set; }
     public bool SnapEnabled { get; set; }
     public string LineColour { get; set; } = AnnotationColours.Copper;
     public bool ColourOpen { get; set; }
@@ -58,6 +60,22 @@ public sealed partial class EditorViewModel
     public double PanX { get; set; }
     public double PanY { get; set; }
     public List<AnnotationViewModel> AnnotationViews { get; set; } = [];
+
+    public static string DefaultProjectTitle(DateTimeOffset timestamp) =>
+        $"Untitled {timestamp.ToString("yyyy-MM-dd HH-mm", CultureInfo.InvariantCulture)}";
+
+    public void SetLabelScaleMode(string? value)
+    {
+        LabelScaleMode = LabelScaleModes.Normalize(value);
+        LabelScaleOpen = false;
+        RefreshAnnotationLabelScale();
+    }
+
+    public void RefreshAnnotationLabelScale()
+    {
+        foreach (var annotation in AnnotationViews)
+            annotation.ApplyLabelScale(Zoom, LabelScaleMode);
+    }
 
     public PixelRect StageRect => new(0, HeaderHeight, ViewportWidth,
         Math.Max(80, ViewportHeight - HeaderHeight - InspectorHeight));
@@ -196,14 +214,24 @@ public sealed class AnnotationViewModel
     public required string LineStyle { get; init; }
     public required string StartStyle { get; init; }
     public required string EndStyle { get; init; }
-    public required string LabelStyle { get; init; }
+    public string LabelHitStyle { get; private set; } = "";
+    public string LabelStyle { get; private set; } = "";
     public required string Caption { get; init; }
     public required string LineClass { get; init; }
     public required string LabelClass { get; init; }
     public required string ColourStyle { get; init; }
     public required string MarkerStyle { get; init; }
+    private string _labelPositionStyle = "";
+    private string _labelColour = "";
+    private int _labelWidth;
 
-    public static AnnotationViewModel From(DimensionAnnotation annotation, bool selected, double imageWidth, double imageHeight)
+    public static AnnotationViewModel From(
+        DimensionAnnotation annotation,
+        bool selected,
+        double imageWidth,
+        double imageHeight,
+        double zoom = 1,
+        string labelScaleMode = LabelScaleModes.Auto)
     {
         var c = CultureInfo.InvariantCulture;
         var dx = (annotation.End.X - annotation.Start.X) * imageWidth;
@@ -215,7 +243,7 @@ public sealed class AnnotationViewModel
         var caption = CaptionFor(annotation);
         var labelWidth = LabelWidthFor(annotation);
         var colour = AnnotationColours.Normalize(annotation.ColourHex, annotation.Style);
-        return new()
+        var view = new AnnotationViewModel
         {
             Id = annotation.Id.ToString("D"),
             LineClass = selected ? "dimension-line selected" : "dimension-line",
@@ -225,13 +253,29 @@ public sealed class AnnotationViewModel
             LineStyle = $"left:{Percent(annotation.Start.X)};top:{Percent(annotation.Start.Y)};width:{widthPercent.ToString("0.###", c)}%;transform:rotate({angle.ToString("0.###", c)}deg);background:{colour}",
             StartStyle = $"left:{Percent(annotation.Start.X)};top:{Percent(annotation.Start.Y)}",
             EndStyle = $"left:{Percent(annotation.End.X)};top:{Percent(annotation.End.Y)}",
-            LabelStyle = $"left:{Percent(annotation.LabelAnchor.X)};top:{Percent(annotation.LabelAnchor.Y)};width:{labelWidth}px;transform:translate({(-labelWidth / 2d).ToString("0.###", c)}px,-22px);color:{colour};border-color:{colour}",
             Caption = caption
         };
+        view._labelPositionStyle = $"left:{Percent(annotation.LabelAnchor.X)};top:{Percent(annotation.LabelAnchor.Y)}";
+        view._labelColour = colour;
+        view._labelWidth = labelWidth;
+        view.ApplyLabelScale(zoom, labelScaleMode);
+        return view;
     }
 
-    public static int LabelWidthFor(DimensionAnnotation annotation) =>
-        Math.Clamp(32 + CaptionFor(annotation).Length * 8, 88, 280);
+    public void ApplyLabelScale(double zoom, string labelScaleMode)
+    {
+        var c = CultureInfo.InvariantCulture;
+        var counterScale = 1d / Math.Max(1d, zoom);
+        var visualScale = LabelScaleModes.Fraction(labelScaleMode);
+        LabelHitStyle = $"{_labelPositionStyle};transform:translate(-22px,-22px) scale({counterScale.ToString("0.###", c)})";
+        LabelStyle = $"width:{_labelWidth}px;transform:translate({(-_labelWidth / 2d).ToString("0.###", c)}px,-22px) scale({visualScale.ToString("0.##", c)});color:{_labelColour};border-color:{_labelColour}";
+    }
+
+    public static int LabelWidthFor(DimensionAnnotation annotation)
+    {
+        var millimetreAllowance = annotation.Unit == MeasurementUnit.Millimetres ? 10 : 0;
+        return Math.Clamp(32 + CaptionFor(annotation).Length * 8 + millimetreAllowance, 88, 280);
+    }
 
     private static string CaptionFor(DimensionAnnotation annotation)
     {
@@ -240,4 +284,27 @@ public sealed class AnnotationViewModel
             ? $"{annotation.DisplayText} {suffix}"
             : $"{annotation.Label}: {annotation.DisplayText} {suffix}";
     }
+}
+
+public static class LabelScaleModes
+{
+    public const string Auto = "Auto";
+    public const string Full = "100%";
+    public const string ThreeQuarters = "75%";
+    public const string Half = "50%";
+    public const string Quarter = "25%";
+
+    public static string Normalize(string? value) => value switch
+    {
+        Full or ThreeQuarters or Half or Quarter => value,
+        _ => Auto
+    };
+
+    public static double Fraction(string? value) => Normalize(value) switch
+    {
+        ThreeQuarters => 0.75,
+        Half => 0.5,
+        Quarter => 0.25,
+        _ => 1
+    };
 }

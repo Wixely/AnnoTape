@@ -74,6 +74,11 @@ public sealed class AnnoTapeAppTests
         model.ColourOpen = true;
         var colourPickerReport = CupriDoctor.Check(app.Html, app.Css, width: width, height: height, model: app.Model);
         Assert.IsTrue(colourPickerReport.IsClean, colourPickerReport.ToString());
+
+        model.ColourOpen = false;
+        model.LabelScaleOpen = true;
+        var labelScaleReport = CupriDoctor.Check(app.Html, app.Css, width: width, height: height, model: app.Model);
+        Assert.IsTrue(labelScaleReport.IsClean, labelScaleReport.ToString());
     }
 
     [TestMethod]
@@ -89,6 +94,35 @@ public sealed class AnnoTapeAppTests
         var box = HitTesting.ScreenBox(hero);
         Assert.AreEqual(520f, box.W, 0.1f, document.DumpTree());
         Assert.AreEqual(400f, box.X + box.W / 2, 0.1f, document.DumpTree());
+    }
+
+    [TestMethod]
+    public void UntitledProjectNamesIncludeTheLocalDateAndTime()
+    {
+        var timestamp = new DateTimeOffset(2026, 10, 5, 14, 37, 0, TimeSpan.FromHours(1));
+
+        Assert.AreEqual("Untitled 2026-10-05 14-37", EditorViewModel.DefaultProjectTitle(timestamp));
+    }
+
+    [TestMethod]
+    [DataRow(320)]
+    [DataRow(400)]
+    public async Task SavedStateKeepsAComfortableRightInset(int width)
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        model.Page = "editor";
+        model.ViewportWidth = width;
+        model.ViewportHeight = 800;
+
+        using var document = app.CreateDocument();
+        using (document.RenderToImage(width, 800, app.Background)) { }
+        var saveState = Find(document.Root, node => node.Element?.ClassList.Contains("save-state") == true);
+        Assert.IsNotNull(saveState);
+
+        var box = HitTesting.ScreenBox(saveState);
+        Assert.IsLessThanOrEqualTo(width - 16f, box.X + box.W, document.DumpTree());
     }
 
     [TestMethod]
@@ -348,6 +382,120 @@ public sealed class AnnoTapeAppTests
     }
 
     [TestMethod]
+    public void LabelsDefaultToAutoAndStayScreenSizedWhileZooming()
+    {
+        var model = new EditorViewModel();
+        var annotation = new DimensionAnnotation();
+        var view = AnnotationViewModel.From(
+            annotation, selected: true, 400, 300, zoom: 4, labelScaleMode: model.LabelScaleMode);
+
+        Assert.AreEqual(LabelScaleModes.Auto, model.LabelScaleMode);
+        Assert.Contains("scale(0.25)", view.LabelHitStyle);
+        Assert.Contains("scale(1)", view.LabelStyle);
+
+        model.AnnotationViews = [view];
+        model.LabelScaleMode = LabelScaleModes.ThreeQuarters;
+        model.Zoom = 2;
+        model.RefreshAnnotationLabelScale();
+
+        Assert.Contains("scale(0.5)", view.LabelHitStyle);
+        Assert.Contains("scale(0.75)", view.LabelStyle);
+    }
+
+    [TestMethod]
+    public void MillimetreLabelsAllowForTheWideSuffixGlyphs()
+    {
+        var millimetres = new DimensionAnnotation
+        {
+            DisplayText = "1000",
+            Unit = MeasurementUnit.Millimetres
+        };
+        var inches = millimetres with { Unit = MeasurementUnit.Inches };
+
+        Assert.AreEqual(98, AnnotationViewModel.LabelWidthFor(millimetres));
+        Assert.AreEqual(88, AnnotationViewModel.LabelWidthFor(inches));
+    }
+
+    [TestMethod]
+    public async Task LabelScaleDropdownOffersAutoAndFourPercentages()
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+
+        Assert.Contains("aria-label=\"Label size while zooming\"", app.Html);
+        Assert.Contains("value=\"Auto\">Auto", app.Html);
+        Assert.Contains("value=\"100%\">100%", app.Html);
+        Assert.Contains("value=\"75%\">75%", app.Html);
+        Assert.Contains("value=\"50%\">50%", app.Html);
+        Assert.Contains("value=\"25%\">25%", app.Html);
+    }
+
+    [TestMethod]
+    public async Task AutoLabelScaleKeepsRenderedLabelAndHitTargetStableWhileZooming()
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        model.Page = "editor";
+        model.ImageSource = "missing-test-photo.png";
+        model.SourceWidth = 400;
+        model.SourceHeight = 300;
+        model.ViewportWidth = 400;
+        model.ViewportHeight = 800;
+        var annotation = new DimensionAnnotation
+        {
+            Start = new(0.2, 0.5),
+            End = new(0.8, 0.5),
+            LabelAnchor = new(0.5, 0.5),
+            DisplayText = "1840"
+        };
+        model.AnnotationViews = [AnnotationViewModel.From(annotation, selected: true, 400, 300)];
+
+        using var document = app.CreateDocument();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+        var label = Find(document.Root, node => node.Element?.ClassList.Contains("measure-label") == true);
+        var target = Find(document.Root, node => node.Element?.ClassList.Contains("label-handle") == true);
+        Assert.IsNotNull(label);
+        Assert.IsNotNull(target);
+        var baseLabel = HitTesting.ScreenBox(label);
+        var baseTarget = HitTesting.ScreenBox(target);
+
+        model.Zoom = 4;
+        model.RefreshAnnotationLabelScale();
+        document.Refresh();
+        using (var image = document.RenderToImage(400, 800, app.Background))
+        {
+            SaveSnapshotIfRequested(image, "label-auto-zoom4.png");
+        }
+        var refreshedLabel = Find(document.Root, node => node.Element?.ClassList.Contains("measure-label") == true);
+        var refreshedTarget = Find(document.Root, node => node.Element?.ClassList.Contains("label-handle") == true);
+        Assert.IsNotNull(refreshedLabel);
+        Assert.IsNotNull(refreshedTarget);
+        var zoomedLabel = HitTesting.ScreenBox(refreshedLabel);
+        var zoomedTarget = HitTesting.ScreenBox(refreshedTarget);
+
+        Assert.AreEqual(baseLabel.W, zoomedLabel.W, 1f, document.DumpTree());
+        Assert.AreEqual(baseLabel.H, zoomedLabel.H, 1f, document.DumpTree());
+        Assert.AreEqual(baseTarget.W, zoomedTarget.W, 1f, document.DumpTree());
+        Assert.AreEqual(baseTarget.H, zoomedTarget.H, 1f, document.DumpTree());
+
+        model.SetLabelScaleMode(LabelScaleModes.Half);
+        document.Refresh();
+        using (var image = document.RenderToImage(400, 800, app.Background))
+        {
+            SaveSnapshotIfRequested(image, "label-half-zoom4.png");
+        }
+        var halfLabel = Find(document.Root, node => node.Element?.ClassList.Contains("measure-label") == true);
+        var halfTarget = Find(document.Root, node => node.Element?.ClassList.Contains("label-handle") == true);
+        Assert.IsNotNull(halfLabel);
+        Assert.IsNotNull(halfTarget);
+        var halfTargetBox = HitTesting.ScreenBox(halfTarget);
+
+        Assert.Contains("scale(0.5)", model.AnnotationViews.Single().LabelStyle);
+        Assert.AreEqual(baseTarget.W, halfTargetBox.W, 1f, document.DumpTree());
+    }
+
+    [TestMethod]
     public void AnnotationLineStartsAtTheFirstEndpointAndAccountsForImageAspectRatio()
     {
         var annotation = new DimensionAnnotation { Start = new(0.2, 0.2), End = new(0.2, 0.8) };
@@ -356,8 +504,8 @@ public sealed class AnnoTapeAppTests
         Assert.Contains("left:20%", view.LineStyle);
         Assert.Contains("top:20%", view.LineStyle);
         Assert.Contains("rotate(90deg)", view.LineStyle);
-        Assert.Contains("width:88px", view.LabelStyle);
-        Assert.Contains("translate(-44px,-22px)", view.LabelStyle);
+        Assert.Contains("width:98px", view.LabelStyle);
+        Assert.Contains("translate(-49px,-22px)", view.LabelStyle);
     }
 
     [TestMethod]

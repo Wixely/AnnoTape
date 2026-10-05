@@ -2,7 +2,7 @@
 
 <p align="center"><img src="docs/images/annotape-icon.png" width="128" alt="AnnoTape app icon"></p>
 
-AnnoTape is an offline Android measurement notebook with a Windows desktop host for development and layout testing. Capture or choose a photo, draw optionally angle-snapped dimension lines over it, choose annotation colours and image-wide units, position attached or free labels, enter the real measurements, and share or save an annotated image.
+AnnoTape is an offline Android measurement notebook with a Windows desktop host for development and layout testing. Capture or choose a photo, draw optionally angle-snapped dimension lines over it, choose annotation colours and image-wide units, position attached or free labels, enter the real measurements, and share or save an annotated image. Label scaling defaults to Auto so labels remain readable while the photo is zoomed; fixed 100%, 75%, 50%, and 25% display sizes are also available from the editor toolbar.
 
 The entered value is authoritative. AnnoTape does not infer physical dimensions from ordinary photo pixels and never labels pixel-derived values as measurements.
 
@@ -12,7 +12,7 @@ The entered value is authoritative. AnnoTape does not infer physical dimensions 
 
 The architecture spike and testable MVP are implemented. The portable editor, SQLite persistence, recovery state, camera/photo-picker boundary, and full-resolution PNG/JPEG export compile. Automated tests pass. Camera interoperability, process-death return, gestures, memory limits, and TalkBack still require representative Android hardware before a release claim.
 
-The 0.2 alpha uses one photo per project. The schema already supports ordered multi-photo projects, so adding a document navigator does not require a migration.
+The 0.2 release uses one photo per project. The schema already supports ordered multi-photo projects, so adding a document navigator does not require a migration.
 
 ## Stack
 

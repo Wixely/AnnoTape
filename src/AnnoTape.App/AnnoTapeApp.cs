@@ -114,6 +114,12 @@ public sealed class AnnoTapeApp : CupriApp
                 ApplyGlobalUnit(e.Element.GetAttribute("data-set-value"));
                 return true;
             }
+            if (e.Value == nameof(EditorViewModel.LabelScaleMode))
+            {
+                _model.SetLabelScaleMode(e.Element.GetAttribute("data-set-value"));
+                _model.Status = $"Label size: {_model.LabelScaleMode}";
+                return true;
+            }
             if (!e.Element.ClassList.Contains("cupri-color-sw")) return false;
             ApplyColour(e.Element.GetAttribute("data-set-value"));
             return true;
@@ -139,7 +145,7 @@ public sealed class AnnoTapeApp : CupriApp
 
     private void NewProject()
     {
-        _project = new AnnoProject();
+        _project = new AnnoProject { Title = EditorViewModel.DefaultProjectTitle(DateTimeOffset.Now) };
         _model.ProjectTitle = _project.Title;
         _model.ProjectNotes = "";
         _model.ProjectLocation = "";
@@ -237,9 +243,11 @@ public sealed class AnnoTapeApp : CupriApp
             var zoom = _gestureBaseZoom;
             if (pointerCount >= 2 && _gestureBaseDistance > 0.01)
                 zoom *= PointerSpread(pointer.Pointers) / _gestureBaseDistance;
-            return _model.SetViewport(
+            var changed = _model.SetViewport(
                 _gestureBaseZoom, _gestureBasePanX, _gestureBasePanY,
                 _gestureBaseFocusX, _gestureBaseFocusY, focusX, focusY, zoom);
+            if (changed) _model.RefreshAnnotationLabelScale();
+            return changed;
         }
         if (pointer.Phase is PointerPhase.Up or PointerPhase.Cancel && pointerCount <= 1) _gesturePointerCount = 0;
         return true;
@@ -250,9 +258,10 @@ public sealed class AnnoTapeApp : CupriApp
         if (_model.ImageSource.Length == 0) return false;
         var steps = -wheel.DeltaY / 50d;
         var targetZoom = _model.Zoom * Math.Pow(1.18, steps);
-        _model.SetViewport(
+        if (_model.SetViewport(
             _model.Zoom, _model.PanX, _model.PanY,
-            wheel.X, wheel.Y, wheel.X, wheel.Y, targetZoom);
+            wheel.X, wheel.Y, wheel.X, wheel.Y, targetZoom))
+            _model.RefreshAnnotationLabelScale();
         return true;
     }
 
@@ -548,7 +557,8 @@ public sealed class AnnoTapeApp : CupriApp
     {
         var frame = _model.BaseImageRect;
         _model.AnnotationViews = CurrentDocument?.Annotations
-            .Select(item => AnnotationViewModel.From(item, item.Id == _selectedId, frame.Width, frame.Height))
+            .Select(item => AnnotationViewModel.From(
+                item, item.Id == _selectedId, frame.Width, frame.Height, _model.Zoom, _model.LabelScaleMode))
             .ToList() ?? [];
         SyncSelection();
         ScheduleRefresh();
@@ -686,7 +696,9 @@ public sealed class AnnoTapeApp : CupriApp
 
     private void SyncProjectDetails()
     {
-        _project.Title = string.IsNullOrWhiteSpace(_model.ProjectTitle) ? "Untitled measurement" : _model.ProjectTitle.Trim();
+        _project.Title = string.IsNullOrWhiteSpace(_model.ProjectTitle)
+            ? EditorViewModel.DefaultProjectTitle(DateTimeOffset.Now)
+            : _model.ProjectTitle.Trim();
         _project.Notes = _model.ProjectNotes;
         _project.Location = string.IsNullOrWhiteSpace(_model.ProjectLocation) ? null : _model.ProjectLocation.Trim();
     }

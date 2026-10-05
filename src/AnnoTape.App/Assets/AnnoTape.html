@@ -22,7 +22,7 @@
 
     <main class="editor" style="display:{{EditorDisplay}}">
       <header class="topbar">
-        <cupri-button class="back-home" variant="ghost" aria-label="Back to projects">‹</cupri-button>
+        <cupri-button class="back-home" variant="ghost" aria-label="Back to projects"><span class="back-chevron" aria-hidden="true">‹</span></cupri-button>
         <cupri-textfield class="title" value="{{ProjectTitle}}" aria-label="Project title"></cupri-textfield>
         <span class="save-state"><span class="save-indicator" aria-hidden="true"></span>{{SaveState}}</span>
       </header>
@@ -39,7 +39,7 @@
           <div class="{{LineClass}}" style="{{LineStyle}}" data-repeat="AnnotationViews" data-select="{{Id}}"><div class="line-cap line-cap-start" style="{{ColourStyle}}" data-select="{{Id}}"></div><div class="line-cap line-cap-end" style="{{ColourStyle}}" data-select="{{Id}}"></div></div>
           <div class="handle start" style="{{StartStyle}}" data-repeat="AnnotationViews" data-drag="start:{{Id}}" role="button" aria-label="Move first endpoint"><div class="handle-marker" style="{{MarkerStyle}}" data-drag="start:{{Id}}"></div></div>
           <div class="handle end" style="{{EndStyle}}" data-repeat="AnnotationViews" data-drag="end:{{Id}}" role="button" aria-label="Move second endpoint"><div class="handle-marker" style="{{MarkerStyle}}" data-drag="end:{{Id}}"></div></div>
-          <div class="{{LabelClass}}" style="{{LabelStyle}}" data-repeat="AnnotationViews" data-drag="label:{{Id}}" role="button" aria-label="Move measurement label">{{Caption}}</div>
+          <div class="label-handle" style="{{LabelHitStyle}}" data-repeat="AnnotationViews" data-drag="label:{{Id}}" role="button" aria-label="Move measurement label"><div class="{{LabelClass}}" style="{{LabelStyle}}" data-drag="label:{{Id}}">{{Caption}}</div></div>
         </div>
       </div>
 
@@ -63,6 +63,10 @@
             <cupri-option value="Millimetres">mm</cupri-option><cupri-option value="Centimetres">cm</cupri-option><cupri-option value="Metres">m</cupri-option>
             <cupri-option value="Inches">inches</cupri-option><cupri-option value="FeetAndInches">feet/inches</cupri-option>
           </cupri-select>
+          <div class="label-scale-option"><span>Label</span><cupri-select class="label-scale" value="{{LabelScaleMode}}" open="{{LabelScaleOpen}}" aria-label="Label size while zooming">
+            <cupri-option value="Auto">Auto</cupri-option><cupri-option value="100%">100%</cupri-option><cupri-option value="75%">75%</cupri-option>
+            <cupri-option value="50%">50%</cupri-option><cupri-option value="25%">25%</cupri-option>
+          </cupri-select></div>
           <cupri-color class="line-colour" value="{{LineColour}}" open="{{ColourOpen}}" aria-label="Measurement colour"></cupri-color>
         </div>
         <div class="selection" style="display:{{InspectorDisplay}}">

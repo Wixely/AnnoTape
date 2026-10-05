@@ -6,8 +6,8 @@
     <TargetPlatformMinVersion>24.0</TargetPlatformMinVersion>
     <ApplicationId>app.annotape.mobile</ApplicationId>
     <ApplicationTitle>AnnoTape</ApplicationTitle>
-    <ApplicationVersion>3</ApplicationVersion>
-    <ApplicationDisplayVersion>0.2.0-alpha.1</ApplicationDisplayVersion>
+    <ApplicationVersion>4</ApplicationVersion>
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <UseMonoRuntime>false</UseMonoRuntime>
     <!-- Crossgen2 on Windows can hold the generated Android resource assembly mapped while
