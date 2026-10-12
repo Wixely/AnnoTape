@@ -105,6 +105,20 @@ public sealed class AnnoTapeAppTests
     }
 
     [TestMethod]
+    public async Task ProjectTitleUsesTheTextKeyboardWhileMeasurementsUseDecimalInput()
+    {
+        var app = new AnnoTapeApp(new FakePlatform(_directory));
+        await app.Initialization;
+
+        Assert.Contains(
+            "class=\"title\" value=\"{{ProjectTitle}}\" inputmode=\"text\"",
+            app.Html);
+        Assert.Contains(
+            "class=\"value-input\" value=\"{{MeasurementText}}\" inputmode=\"decimal\"",
+            app.Html);
+    }
+
+    [TestMethod]
     [DataRow(320)]
     [DataRow(400)]
     public async Task SavedStateKeepsAComfortableRightInset(int width)
@@ -299,25 +313,6 @@ public sealed class AnnoTapeAppTests
     }
 
     [TestMethod]
-    public async Task WheelOverPhotoZoomsAtPointerInsteadOfScrollingEditor()
-    {
-        var app = new AnnoTapeApp(new FakePlatform(_directory));
-        await app.Initialization;
-        var model = (EditorViewModel)app.Model;
-        model.Page = "editor";
-        model.ImageSource = "missing-test-photo.png";
-        model.SourceWidth = 400;
-        model.SourceHeight = 300;
-        using var document = app.CreateDocument();
-        using (document.RenderToImage(400, 800, app.Background)) { }
-
-        Assert.IsTrue(document.DispatchWheel(100, 200, -50));
-
-        Assert.IsGreaterThan(1, model.Zoom);
-        Assert.AreNotEqual(0, model.PanX);
-    }
-
-    [TestMethod]
     public async Task TwoPointersPinchPhotoWithoutCreatingMeasurement()
     {
         var app = new AnnoTapeApp(new FakePlatform(_directory));
@@ -335,29 +330,6 @@ public sealed class AnnoTapeAppTests
         Assert.IsTrue(document.DispatchPointer(11, PointerPhase.Move, 270, 220));
 
         Assert.AreEqual(1.5, model.Zoom, 0.02);
-    }
-
-    [TestMethod]
-    public async Task MiddleButtonPansEvenWhileAddModeIsArmed()
-    {
-        var app = new AnnoTapeApp(new FakePlatform(_directory));
-        await app.Initialization;
-        var model = (EditorViewModel)app.Model;
-        model.Page = "editor";
-        model.ImageSource = "missing-test-photo.png";
-        model.SourceWidth = 400;
-        model.SourceHeight = 300;
-        model.Zoom = 2;
-        model.AddMode = true;
-        using var document = app.CreateDocument();
-        using (document.RenderToImage(400, 800, app.Background)) { }
-
-        Assert.IsTrue(document.DispatchMiddlePointer(-1, PointerPhase.Down, 200, 220));
-        Assert.IsTrue(document.DispatchMiddlePointer(-1, PointerPhase.Move, 240, 250));
-
-        Assert.AreEqual(40, model.PanX, 0.1);
-        Assert.AreEqual(30, model.PanY, 0.1);
-        Assert.IsTrue(model.AddMode);
     }
 
     [TestMethod]

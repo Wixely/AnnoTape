@@ -138,7 +138,6 @@ public sealed class AnnoTapeApp : CupriApp
         });
         document.OnPointer("data-drag", HandleAnnotationDrag);
         document.OnPointer("data-editor", HandleEditorPointer);
-        document.OnWheel("data-editor", HandleEditorWheel);
     }
 
     private PhotoDocument? CurrentDocument => _project.Documents.FirstOrDefault();
@@ -222,8 +221,8 @@ public sealed class AnnoTapeApp : CupriApp
 
     private bool HandleEditorPointer(MultiPointerEvent pointer)
     {
-        if (_model.AddMode && !pointer.IsMiddleButton && pointer.Pointers.Count == 1) return HandleDrawing(pointer);
-        if (_model.AddMode && (pointer.IsMiddleButton || pointer.Pointers.Count >= 2)) CancelDrawingForNavigation();
+        if (_model.AddMode && pointer.Pointers.Count == 1) return HandleDrawing(pointer);
+        if (_model.AddMode && pointer.Pointers.Count >= 2) CancelDrawingForNavigation();
 
         var (focusX, focusY) = PointerCentre(pointer.Pointers);
         var pointerCount = pointer.Pointers.Count;
@@ -250,18 +249,6 @@ public sealed class AnnoTapeApp : CupriApp
             return changed;
         }
         if (pointer.Phase is PointerPhase.Up or PointerPhase.Cancel && pointerCount <= 1) _gesturePointerCount = 0;
-        return true;
-    }
-
-    private bool HandleEditorWheel(CupriWheelEvent wheel)
-    {
-        if (_model.ImageSource.Length == 0) return false;
-        var steps = -wheel.DeltaY / 50d;
-        var targetZoom = _model.Zoom * Math.Pow(1.18, steps);
-        if (_model.SetViewport(
-            _model.Zoom, _model.PanX, _model.PanY,
-            wheel.X, wheel.Y, wheel.X, wheel.Y, targetZoom))
-            _model.RefreshAnnotationLabelScale();
         return true;
     }
 

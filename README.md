@@ -18,7 +18,7 @@ The 0.2 release uses one photo per project. The schema already supports ordered 
 
 - C# and .NET 10
 - Plain .NET for Android (no MAUI, WebView, JavaScript, or browser shell)
-- [CupriFace](https://github.com/Wixely/CupriFace) engine, shell, and Android host `0.24.1-annotape.5` from pinned source
+- [CupriFace](https://github.com/Wixely/CupriFace) engine, shell, and Android host `0.41.0` from pinned source
 - SQLite with Dapper and DnaX `10.0.0-alpha.2` checksummed migrations
 - SkiaSharp source-resolution export
 - Minimum Android API 24; Android 13+ uses the system photo picker and earlier releases use `ACTION_OPEN_DOCUMENT`
@@ -35,7 +35,7 @@ Prerequisites are .NET SDK `10.0.300`, the .NET Android workload, and a clean Dn
 git/
   AnnoTape/
   DnaX/        # commit ab1471dd0caa3775f3bd26f9f12bf04d7df8752e
-  CupriFace/   # commit 0cc37412c59994f2f4d029a73222886e71ef7210
+  CupriFace/   # commit a331aace00f27d1e84565250ba4bd20aa926852a
 ```
 
 Then run:
@@ -57,7 +57,7 @@ GitHub Actions runs the Release tests, builds the Windows desktop layout host, a
 downloadable ARM64 test-signed APK plus its SHA-256 checksum on every push and pull request. The
 workflow can also be started manually. The artifact is suitable for testing, not store release.
 
-For desktop layout testing, select **Run AnnoTape Desktop (layout testing)** in VS Code's Run and Debug view and press F5. The desktop Camera and Photo picker actions both open a local image picker. Exports can open in the registered Windows image application or be saved through the native file dialog. Scroll over the photo to zoom around the cursor, and hold the middle mouse button while moving to grab and pan it.
+For desktop layout testing, select **Run AnnoTape Desktop (layout testing)** in VS Code's Run and Debug view and press F5. The desktop Camera and Photo picker actions both open a local image picker. Exports can open in the registered Windows image application or be saved through the native file dialog.
 
 Build an installable release APK with:
 

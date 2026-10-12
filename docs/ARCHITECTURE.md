@@ -12,7 +12,7 @@
 
 Android release packaging targets `android-arm64`, uses CoreCLR as required by the pinned CupriFace runtime, enables partial trimming for trim-compatible framework and SDK assemblies, and disables ReadyToRun because Windows crossgen2 can fail while rewriting the generated Android resource assembly. This is a documented packaging exception pending measured device evidence.
 
-CupriFace `0.24.0` owns Android surface restoration after external picker and camera activities. AnnoTape keeps its existing app instance, restores the editor through the normal activity result, and flushes on pause; it does not recreate the activity or maintain a graphics-restart marker.
+CupriFace `0.41.0` owns Android surface restoration after external picker and camera activities. AnnoTape keeps its existing app instance, restores the editor through the normal activity result, and flushes on pause; it does not recreate the activity or maintain a graphics-restart marker.
 
 ## Durability contract
 

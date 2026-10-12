@@ -4,7 +4,7 @@ AnnoTape depends on the following permissively licensed projects. Exact resolved
 
 | Component | Pinned version | License | Project |
 |---|---:|---|---|
-| CupriFace | 0.24.0 | MIT | https://github.com/Wixely/CupriFace |
+| CupriFace | 0.41.0 | MIT | https://github.com/Wixely/CupriFace |
 | AngleSharp (through CupriFace) | 1.7.0 | MIT | https://github.com/AngleSharp/AngleSharp |
 | SkiaSharp | 3.116.1 | MIT | https://github.com/mono/SkiaSharp |
 | HarfBuzzSharp (through CupriFace) | 8.3.0.1 | MIT | https://github.com/mono/SkiaSharp |

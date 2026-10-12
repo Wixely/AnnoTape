@@ -1,10 +1,10 @@
 param(
     [string]$CupriFaceRoot = (Join-Path $PSScriptRoot '..\..\CupriFace'),
-    [string]$PackageVersion = '0.24.1-annotape.5'
+    [string]$PackageVersion = '0.41.0'
 )
 
 $ErrorActionPreference = 'Stop'
-$expectedCommit = '0cc37412c59994f2f4d029a73222886e71ef7210'
+$expectedCommit = 'a331aace00f27d1e84565250ba4bd20aa926852a'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $resolvedCupriFaceRoot = (Resolve-Path $CupriFaceRoot).Path
 $actualCommit = (& git -C $resolvedCupriFaceRoot rev-parse HEAD).Trim()

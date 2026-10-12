@@ -122,7 +122,7 @@ cupri-button { min-height:48px; }
 .tools .history-tools { flex:1; }
 .tools .tool-divider { width:1px; height:28px; margin:3px 0; background:#50301f; }
 .tools .cupri-button {
-  min-width:0; min-height:38px; padding:11px 10px 5px; border-radius:8px; display:flex;
+  min-width:0; min-height:38px; padding:8px 10px; border-radius:8px; display:flex;
   align-items:center; justify-content:center; font-size:11px; text-align:center; white-space:nowrap; box-shadow:none;
 }
 .tools .add-measurement { min-width:82px; background:#d97b34; border:1px solid #e9995d; color:#190e08; }
@@ -132,7 +132,7 @@ cupri-button { min-height:48px; }
 .label-input { flex:1; width:0; min-width:0; }.value-input { flex:1; width:0; min-width:0; }
 .selection-label .cupri-textfield,.selection-value .cupri-textfield,.selection-value .cupri-select-trigger { min-height:44px; }
 .unit-input .cupri-select-trigger { width:100%; min-width:0; }
-.selection-actions .cupri-button { min-height:42px; padding:13px 8px 7px; display:flex; align-items:center; justify-content:center; font-size:12px; text-align:center; }
+.selection-actions .cupri-button { min-height:42px; padding:10px 8px; display:flex; align-items:center; justify-content:center; font-size:12px; text-align:center; }
 .selection-actions .save-value { flex:1.6; background:#d97b34; border:1px solid #e9995d; color:#190e08; }
 .selection-actions .center-label { flex:1; min-width:0; background:#191613; border:1px solid #3b342f; color:#d8cfc8; }
 .selection-actions .delete-measurement { flex:1; background:#210a0e; border:1px solid #5b1821; color:#ff6673; }
@@ -165,13 +165,13 @@ cupri-button { min-height:48px; }
 .export-option.ghost { background:#21140d; border:1px solid #673d24; color:#eb9857; }
 .export-option.ghost span { color:#caa388; }
 .shelf-cancel.cupri-button {
-  width:100%; min-height:44px; margin-top:10px; padding:12px 10px 8px; display:flex; align-items:center; justify-content:center;
+  width:100%; min-height:44px; margin-top:10px; padding:10px; display:flex; align-items:center; justify-content:center;
   background:transparent; border:1px solid #3b342f; color:#aaa19a; text-align:center;
 }
 @media (max-width:360px) {
   .tools.cupri-toolbar { gap:3px; padding:4px; }
   .tools .cupri-toolbar-group { gap:3px; }
-  .tools .cupri-button { padding:12px 6px 2px; font-size:10px; }
+  .tools .cupri-button { padding:7px 6px; font-size:10px; }
   .tools .add-measurement { min-width:70px; }
   .snap-option { min-width:48px; }
   .snap-option > span { display:none; }
