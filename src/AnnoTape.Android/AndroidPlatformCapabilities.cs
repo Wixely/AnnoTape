@@ -19,7 +19,7 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
     private const int PickRequest = 4101;
     private const int CameraRequest = 4102;
     private const int SaveRequest = 4103;
-    private const string ProviderAuthority = "app.annotape.mobile.files";
+    private const string ProviderAuthority = "com.wixely.annotape.files";
     private const string CameraPathKey = "camera_path";
     private readonly Activity _activity = activity;
     private TaskCompletionSource<PhotoSelection?>? _photoCompletion;

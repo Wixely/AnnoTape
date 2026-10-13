@@ -5,7 +5,7 @@ using AndroidX.Core.Content;
 namespace AnnoTape.AndroidHost;
 
 [ContentProvider(
-    ["app.annotape.mobile.files"],
+    ["com.wixely.annotape.files"],
     Exported = false,
     GrantUriPermissions = true,
     Name = "annotape.androidhost.FileShareProvider")]
