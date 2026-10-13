@@ -10,7 +10,7 @@ namespace AnnoTape.AndroidHost;
 
 [Activity(
     Label = "AnnoTape",
-    Name = "app.annotape.mobile.MainActivity",
+    Name = "com.wixely.annotape.MainActivity",
     Icon = "@mipmap/ic_launcher",
     MainLauncher = true,
     Exported = true,

@@ -48,7 +48,7 @@
       "label": "launch: Android",
       "type": "process",
       "command": "adb",
-      "args": ["shell", "am", "start", "-n", "app.annotape.mobile/.MainActivity"],
+      "args": ["shell", "am", "start", "-n", "com.wixely.annotape/.MainActivity"],
       "problemMatcher": [],
       "dependsOn": "deploy: Android debug"
     }

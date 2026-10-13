@@ -75,7 +75,7 @@ jobs:
           $aapt = Get-ChildItem "$env:ANDROID_HOME\build-tools" -Recurse -Filter aapt2.exe | Sort-Object FullName -Descending | Select-Object -First 1
           if (-not $aapt) { throw "aapt2 was not found." }
           $badging = (& $aapt.FullName dump badging $apk.FullName) -join "`n"
-          if ($badging -notmatch "package: name='app.annotape.mobile'") { throw "Unexpected package identity." }
+          if ($badging -notmatch "package: name='com.wixely.annotape'") { throw "Unexpected package identity." }
           if ($badging -notmatch "minSdkVersion:'24'") { throw "Unexpected minimum API." }
           if ($badging -notmatch "native-code: 'arm64-v8a'") { throw "Unexpected native ABI." }
           $permissions = (& $aapt.FullName dump permissions $apk.FullName) -join "`n"
