@@ -30,7 +30,7 @@ Support is currently specific to the QWCJY001 protocol; other Bluetooth measurin
 
 The architecture spike and testable MVP are implemented. The portable editor, SQLite persistence, recovery state, camera/photo-picker boundary, and full-resolution PNG/JPEG export compile. Automated tests pass. Camera interoperability, process-death return, gestures, memory limits, and TalkBack still require representative Android hardware before a release claim.
 
-The 0.2 release uses one photo per project. The schema already supports ordered multi-photo projects, so adding a document navigator does not require a migration.
+The 0.3 release uses one photo per project. The schema already supports ordered multi-photo projects, so adding a document navigator does not require a migration.
 
 ## Stack
 

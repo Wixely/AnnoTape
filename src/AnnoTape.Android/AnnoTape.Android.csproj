@@ -6,8 +6,8 @@
     <TargetPlatformMinVersion>24.0</TargetPlatformMinVersion>
     <ApplicationId>com.wixely.annotape</ApplicationId>
     <ApplicationTitle>AnnoTape</ApplicationTitle>
-    <ApplicationVersion>5</ApplicationVersion>
-    <ApplicationDisplayVersion>0.2.1</ApplicationDisplayVersion>
+    <ApplicationVersion>6</ApplicationVersion>
+    <ApplicationDisplayVersion>0.3.0</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <UseMonoRuntime>false</UseMonoRuntime>
     <!-- Crossgen2 on Windows can hold the generated Android resource assembly mapped while

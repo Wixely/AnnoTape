@@ -76,10 +76,27 @@ jobs:
           if (-not $aapt) { throw "aapt2 was not found." }
           $badging = (& $aapt.FullName dump badging $apk.FullName) -join "`n"
           if ($badging -notmatch "package: name='com.wixely.annotape'") { throw "Unexpected package identity." }
+          if ($badging -notmatch "versionCode='6'") { throw "Unexpected application version code." }
+          if ($badging -notmatch "versionName='0.3.0'") { throw "Unexpected display version." }
           if ($badging -notmatch "minSdkVersion:'24'") { throw "Unexpected minimum API." }
           if ($badging -notmatch "native-code: 'arm64-v8a'") { throw "Unexpected native ABI." }
           $permissions = (& $aapt.FullName dump permissions $apk.FullName) -join "`n"
-          if ($permissions -match "uses-permission: name='android.permission.") { throw "Unexpected Android platform permission in APK." }
+          $expectedPermissions = @(
+            'android.permission.ACCESS_FINE_LOCATION',
+            'android.permission.BLUETOOTH',
+            'android.permission.BLUETOOTH_ADMIN',
+            'android.permission.BLUETOOTH_CONNECT',
+            'android.permission.BLUETOOTH_SCAN',
+            'com.wixely.annotape.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'
+          )
+          $actualPermissions = [regex]::Matches($permissions, "uses-permission(?:-sdk-\d+)?: name='([^']+)'") |
+            ForEach-Object { $_.Groups[1].Value } |
+            Sort-Object -Unique
+          $unexpectedPermissions = @($actualPermissions | Where-Object { $_ -notin $expectedPermissions })
+          $missingPermissions = @($expectedPermissions | Where-Object { $_ -notin $actualPermissions })
+          if ($unexpectedPermissions.Count -gt 0) { throw "Unexpected permissions: $($unexpectedPermissions -join ', ')." }
+          if ($missingPermissions.Count -gt 0) { throw "Missing permissions: $($missingPermissions -join ', ')." }
+          if ($actualPermissions -contains 'android.permission.INTERNET') { throw "The APK must remain offline." }
           New-Item -ItemType Directory -Path artifacts\apk -Force | Out-Null
           Copy-Item -LiteralPath $apk.FullName -Destination artifacts\apk\AnnoTape-android-arm64-test-signed.apk
           $hash = (Get-FileHash artifacts\apk\AnnoTape-android-arm64-test-signed.apk -Algorithm SHA256).Hash
