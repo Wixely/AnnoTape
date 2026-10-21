@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion>24.0</TargetPlatformMinVersion>
-    <ApplicationId>app.annotape.mobile</ApplicationId>
+    <ApplicationId>com.wixely.annotape</ApplicationId>
     <ApplicationTitle>AnnoTape</ApplicationTitle>
     <ApplicationVersion>5</ApplicationVersion>
     <ApplicationDisplayVersion>0.2.1</ApplicationDisplayVersion>
