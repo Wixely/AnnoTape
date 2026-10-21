@@ -34,6 +34,12 @@ public sealed partial class EditorViewModel
     public string ExportDestinationDescription => ExportShare ? "Open the share sheet" : "Choose a file location";
     public string MeasurementText { get; set; } = "1000";
     public string MeasurementLabel { get; set; } = "";
+    public bool MeterAvailable { get; set; }
+    public bool MeterConnected { get; set; }
+    public string MeterStatus { get; set; } = "";
+    public string MeterButtonDisplay => MeterAvailable ? "block" : "none";
+    public string MeterButtonLabel => MeterConnected ? "Disconnect meter" : "Connect meter";
+    public string MeterStatusDisplay => MeterAvailable && MeterStatus.Length > 0 ? "block" : "none";
     public string UnitName { get; set; } = nameof(MeasurementUnit.Millimetres);
     public bool UnitOpen { get; set; }
     public string LabelScaleMode { get; set; } = LabelScaleModes.Auto;

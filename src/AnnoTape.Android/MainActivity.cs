@@ -48,10 +48,22 @@ public sealed class MainActivity : CupriActivity
         _capabilities?.HandleActivityResult(requestCode, resultCode, data);
     }
 
+    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        _capabilities?.HandleRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
     protected override void OnPause()
     {
         if (_app is not null) _ = _app.FlushAsync();
         base.OnPause();
+    }
+
+    protected override void OnDestroy()
+    {
+        _capabilities?.Dispose();
+        base.OnDestroy();
     }
 
 }

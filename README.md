@@ -2,11 +2,29 @@
 
 <p align="center"><img src="docs/images/annotape-icon.png" width="128" alt="AnnoTape app icon"></p>
 
-AnnoTape is an offline Android measurement notebook with a Windows desktop host for development and layout testing. Capture or choose a photo, draw optionally angle-snapped dimension lines over it, choose annotation colours and image-wide units, position attached or free labels, enter the real measurements, and share or save an annotated image. Label scaling defaults to Auto so labels remain readable while the photo is zoomed; fixed 100%, 75%, 50%, and 25% display sizes are also available from the editor toolbar.
+AnnoTape is an offline Android measurement notebook that works with photos, manual values, and a supported physical laser measuring device. Capture or choose a photo, draw optionally angle-snapped dimension lines over it, choose annotation colours and image-wide units, position attached or free labels, and share or save an annotated image. Label scaling defaults to Auto so labels remain readable while the photo is zoomed; fixed 100%, 75%, 50%, and 25% display sizes are also available from the editor toolbar. A Windows desktop host supports development and layout testing.
 
 The entered value is authoritative. AnnoTape does not infer physical dimensions from ordinary photo pixels and never labels pixel-derived values as measurements.
 
 ![AnnoTape measuring a room alcove](docs/images/annotape-alcove-demo.png)
+
+## Physical measuring-device support
+
+AnnoTape has direct, hardware-tested support for the **HOTO Smart Laser Measure QWCJY001**, which may advertise over Bluetooth as `xiaojiang.cc_9e2`.
+
+### Offline and account-free
+
+**No account is needed.** AnnoTape has no sign-in, registration, or cloud account system. It does not connect to Xiaomi, HOTO, Mi Home, or other vendor servers. The Android app does not declare the `INTERNET` permission, so it cannot use ordinary Android networking to send meter data to those services.
+
+Pairing and authentication take place directly between the phone and meter over local Bluetooth Low Energy. The resulting meter token stays in AnnoTape's private storage on the phone, with Android cloud backup disabled. Photos, annotations, measurements, and project details also remain local unless the user deliberately exports an image.
+
+- Connect the meter from AnnoTape's main page and take real measurements with the physical device.
+- A reading automatically updates and saves the currently selected photo annotation, including normal undo history and crash-safe project autosave.
+- If no annotation is selected, the reading remains in the measurement field until one is selected or drawn.
+- Pairing, authentication, and measurement transfer happen directly over local Bluetooth Low Energy.
+- Mi Home and the Xiaomi/HOTO cloud are not involved.
+
+Support is currently specific to the QWCJY001 protocol; other Bluetooth measuring devices are not yet claimed as compatible.
 
 ## Current state
 
@@ -69,7 +87,7 @@ The APK is written below `src\AnnoTape.Android\bin\Release\net10.0-android\andro
 
 ## Privacy and storage
 
-Projects, untouched source media, annotations, notes, and user-entered locations stay in app-private storage. The application requests no location, network, microphone, or broad-storage permission. Export is the only intentional disclosure path. See [docs/PRIVACY.md](docs/PRIVACY.md) and [docs/TESTING.md](docs/TESTING.md).
+Projects, untouched source media, annotations, notes, user-entered locations, and the HOTO meter's local pairing token stay in app-private storage. The application requests Nearby devices access on Android 12 and later. Android 7–11 expose BLE scanning through the legacy fine-location permission even though AnnoTape never reads device location. No network, microphone, or broad-storage permission is declared. Export is the only intentional disclosure path. See [docs/PRIVACY.md](docs/PRIVACY.md) and [docs/TESTING.md](docs/TESTING.md).
 
 ## Repository map
 

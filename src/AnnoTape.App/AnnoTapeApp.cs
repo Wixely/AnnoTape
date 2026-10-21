@@ -37,10 +37,30 @@ public sealed class AnnoTapeApp : CupriApp
     private int _gesturePointerCount;
     private int _refreshRequested;
     private int _saveGeneration;
+    private readonly ILaserMeasureCapabilities? _laserMeasure;
 
     public AnnoTapeApp(IPlatformCapabilities platform)
     {
         _platform = platform;
+        _laserMeasure = platform as ILaserMeasureCapabilities;
+        _model.MeterAvailable = _laserMeasure is not null;
+        if (_laserMeasure is not null)
+        {
+            _laserMeasure.LaserMeasureStatusChanged += status =>
+            {
+                _model.MeterConnected = _laserMeasure.LaserMeasureReady;
+                _model.MeterStatus = status;
+                _model.Status = status;
+                ScheduleRefresh();
+            };
+            _laserMeasure.LaserMeasurementReceived += reading =>
+            {
+                _model.MeasurementText = MeasurementParser.Format(reading.Millimetres, _model.SelectedUnit);
+                if (_model.HasSelection && SaveSelectedValue($"Meter reading saved from {reading.DeviceName}.")) return;
+                _model.Status = $"Meter reading received from {reading.DeviceName}. Select or draw a measurement to use it.";
+                ScheduleRefresh();
+            };
+        }
         _storage = new CrashSafeStorage(platform.AppDataPath);
         _storage.Initialize();
         _storage.CleanAbandonedStaging(TimeSpan.FromDays(1));
@@ -101,7 +121,8 @@ public sealed class AnnoTapeApp : CupriApp
             ScheduleRefresh();
         }));
         document.OnClick(".add-measurement", _ => { _model.AddMode = !_model.AddMode; _model.Status = _model.AddMode ? "Drag across the photo" : "Navigate mode"; });
-        document.OnClick(".save-value", _ => SaveSelectedValue());
+        document.OnClick(".meter-connect", _ => RunDetached(ToggleLaserMeasureAsync));
+        document.OnClick(".save-value", _ => { SaveSelectedValue(); });
         document.OnClick(".center-label", _ => CenterSelectedLabel());
         document.OnClick(".delete-measurement", _ => DeleteSelected());
         document.OnClick(".undo", _ => { if (CurrentDocument is { } photo && _history.Undo(photo)) Changed(); });
@@ -138,6 +159,25 @@ public sealed class AnnoTapeApp : CupriApp
         });
         document.OnPointer("data-drag", HandleAnnotationDrag);
         document.OnPointer("data-editor", HandleEditorPointer);
+    }
+
+    private async Task ToggleLaserMeasureAsync()
+    {
+        if (_laserMeasure is null) return;
+        try
+        {
+            if (_laserMeasure.LaserMeasureConnected)
+                await _laserMeasure.DisconnectLaserMeasureAsync();
+            else
+                await _laserMeasure.ConnectLaserMeasureAsync();
+        }
+        catch (Exception exception)
+        {
+            _model.MeterConnected = _laserMeasure.LaserMeasureReady;
+            _model.MeterStatus = $"Meter connection failed: {exception.Message}";
+            _model.Status = _model.MeterStatus;
+            ScheduleRefresh();
+        }
     }
 
     private PhotoDocument? CurrentDocument => _project.Documents.FirstOrDefault();
@@ -373,15 +413,15 @@ public sealed class AnnoTapeApp : CupriApp
         return true;
     }
 
-    private void SaveSelectedValue()
+    private bool SaveSelectedValue(string successStatus = "Measurement saved")
     {
-        if (CurrentDocument is not { } photo || _selectedId is not { } id) return;
+        if (CurrentDocument is not { } photo || _selectedId is not { } id) return false;
         var annotation = photo.Annotations.FirstOrDefault(item => item.Id == id);
-        if (annotation is null) return;
+        if (annotation is null) return false;
         if (!MeasurementParser.TryParse(_model.MeasurementText, _model.SelectedUnit, out var measurement))
         {
             _model.Status = "Enter a valid non-negative measurement";
-            return;
+            return false;
         }
         var before = annotation.Copy();
         var after = annotation.Copy();
@@ -392,8 +432,9 @@ public sealed class AnnoTapeApp : CupriApp
         if (after.LabelCentered) after.LabelAnchor = AutomaticLabelAnchor(after);
         after.ModifiedUtc = DateTimeOffset.UtcNow;
         _history.Apply(photo, new ReplaceAnnotationCommand(before, after));
-        _model.Status = "Measurement saved";
+        _model.Status = successStatus;
         Changed();
+        return true;
     }
 
     private void DeleteSelected()

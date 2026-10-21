@@ -1,5 +1,6 @@
 using Android.App;
 using Android.Content;
+using Android.Content.PM;
 using Android.Graphics;
 using Android.Media;
 using Android.Provider;
@@ -14,7 +15,7 @@ using Uri = Android.Net.Uri;
 
 namespace AnnoTape.AndroidHost;
 
-public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCapabilities
+public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCapabilities, ILaserMeasureCapabilities, IDisposable
 {
     private const int PickRequest = 4101;
     private const int CameraRequest = 4102;
@@ -22,12 +23,25 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
     private const string ProviderAuthority = "com.wixely.annotape.files";
     private const string CameraPathKey = "camera_path";
     private readonly Activity _activity = activity;
+    private readonly HotoLaserMeasureClient _laserMeasure = new(activity);
     private TaskCompletionSource<PhotoSelection?>? _photoCompletion;
     private TaskCompletionSource<bool>? _saveCompletion;
     private string? _pendingSavePath;
 
     public event Action<PhotoSelection?>? ExternalPhotoCompleted;
     public event Action<string>? ExternalPhotoFailed;
+    public event Action<string>? LaserMeasureStatusChanged
+    {
+        add => _laserMeasure.StatusChanged += value;
+        remove => _laserMeasure.StatusChanged -= value;
+    }
+    public event Action<LaserMeasureReading>? LaserMeasurementReceived
+    {
+        add => _laserMeasure.MeasurementReceived += value;
+        remove => _laserMeasure.MeasurementReceived -= value;
+    }
+    public bool LaserMeasureConnected => _laserMeasure.Connected;
+    public bool LaserMeasureReady => _laserMeasure.Ready;
     public string AppDataPath => _activity.FilesDir?.AbsolutePath ?? throw new InvalidOperationException("Android app storage is unavailable.");
     private ISharedPreferences Preferences => _activity.GetPreferences(FileCreationMode.Private) ?? throw new InvalidOperationException("Android preferences are unavailable.");
 
@@ -41,6 +55,16 @@ public sealed class AndroidPlatformCapabilities(Activity activity) : IPlatformCa
         _activity.StartActivityForResult(intent, PickRequest);
         return _photoCompletion.Task;
     }
+
+    public Task ConnectLaserMeasureAsync(CancellationToken cancellationToken = default) =>
+        _laserMeasure.ConnectAsync(cancellationToken);
+
+    public Task DisconnectLaserMeasureAsync() => _laserMeasure.DisconnectAsync();
+
+    internal void HandleRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults) =>
+        _laserMeasure.HandlePermissionResult(requestCode, permissions, grantResults);
+
+    public void Dispose() => _laserMeasure.Dispose();
 
     public Task<PhotoSelection?> CapturePhotoAsync(CancellationToken cancellationToken = default)
     {

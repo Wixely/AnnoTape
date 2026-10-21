@@ -17,5 +17,8 @@ AnnoTape depends on the following permissively licensed projects. Exact resolved
 | Microsoft.Data.Sqlite | 10.0.11 | MIT | https://github.com/dotnet/efcore |
 | AndroidX Core | 1.16.0.3 | Apache-2.0 | https://developer.android.com/jetpack/androidx |
 | MSTest | 4.3.3 | MIT | https://github.com/microsoft/testfx |
+| Zamer protocol research | source reviewed 2026-10-21 | Apache-2.0 | https://github.com/yelloduxx/zamer |
 
 Each dependency remains subject to its own license. Release packaging must retain any license files brought in by those packages and recheck this table after dependency updates.
+
+The HOTO QWCJY001 frame layout and report attributes were verified against Zamer's published protocol notes and independently implemented in C# with .NET cryptography. No Zamer binary or source file is included in AnnoTape.

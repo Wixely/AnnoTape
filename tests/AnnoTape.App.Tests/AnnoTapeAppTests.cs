@@ -313,6 +313,86 @@ public sealed class AnnoTapeAppTests
     }
 
     [TestMethod]
+    public async Task LaserReadingWithoutSelectionPopulatesTheCurrentUnit()
+    {
+        var platform = new FakeMeterPlatform(_directory);
+        var app = new AnnoTapeApp(platform);
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        model.UnitName = nameof(MeasurementUnit.Centimetres);
+
+        platform.Report(1463m);
+        await WaitForAsync(() => model.MeasurementText == "146.3");
+
+        Assert.IsTrue(model.MeterAvailable);
+        Assert.Contains("Select or draw a measurement", model.Status);
+    }
+
+    [TestMethod]
+    public async Task HomeMeterButtonAndStatusTrackConnectionReadiness()
+    {
+        var platform = new FakeMeterPlatform(_directory);
+        var app = new AnnoTapeApp(platform);
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+
+        Assert.Contains("meter-connect home-meter", app.Html);
+        Assert.AreEqual(1, app.Html.Split("meter-connect", StringSplitOptions.None).Length - 1);
+        Assert.AreEqual("none", model.MeterStatusDisplay);
+        Assert.AreEqual("Connect meter", model.MeterButtonLabel);
+
+        await platform.ConnectLaserMeasureAsync();
+
+        Assert.IsTrue(model.MeterConnected);
+        Assert.AreEqual("block", model.MeterStatusDisplay);
+        Assert.AreEqual("Disconnect meter", model.MeterButtonLabel);
+        Assert.AreEqual("Meter connected", model.MeterStatus);
+
+        await platform.DisconnectLaserMeasureAsync();
+
+        Assert.IsFalse(model.MeterConnected);
+        Assert.AreEqual("Connect meter", model.MeterButtonLabel);
+        Assert.AreEqual("Meter disconnected", model.MeterStatus);
+    }
+
+    [TestMethod]
+    public async Task LaserReadingAutomaticallySavesTheSelectedMeasurement()
+    {
+        var platform = new FakeMeterPlatform(_directory);
+        var app = new AnnoTapeApp(platform);
+        await app.Initialization;
+        var model = (EditorViewModel)app.Model;
+        using var document = app.CreateDocument();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+        var sourcePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
+            "..", "..", "..", "..", "..", "artwork", "demo", "room-alcove.png"));
+        platform.CompleteExternalPhoto(new PhotoSelection(
+            "room-alcove.png", ".png", 1536, 1024, 0,
+            _ => Task.FromResult<Stream>(File.OpenRead(sourcePath))));
+        await WaitForAsync(() => !string.IsNullOrWhiteSpace(model.ImageSource));
+
+        model.AddMode = true;
+        document.Refresh();
+        using (document.RenderToImage(400, 800, app.Background)) { }
+        var frame = model.BaseImageRect;
+        var startX = (float)(frame.X + frame.Width * 0.25);
+        var endX = (float)(frame.X + frame.Width * 0.75);
+        var y = (float)(frame.Y + frame.Height * 0.5);
+        Assert.IsTrue(document.DispatchPointer(1, PointerPhase.Down, startX, y));
+        Assert.IsTrue(document.DispatchPointer(1, PointerPhase.Move, endX, y));
+        Assert.IsTrue(document.DispatchPointer(1, PointerPhase.Up, endX, y));
+        Assert.IsTrue(model.HasSelection);
+
+        platform.Report(1463m);
+        await WaitForAsync(() => model.Status == "Meter reading saved from test meter.");
+
+        Assert.AreEqual("1463", model.MeasurementText);
+        Assert.AreEqual("Selected: 1463 mm", model.SelectionSummary);
+        await app.FlushAsync();
+        Assert.AreEqual("Saved", model.SaveState);
+    }
+
+    [TestMethod]
     public async Task TwoPointersPinchPhotoWithoutCreatingMeasurement()
     {
         var app = new AnnoTapeApp(new FakePlatform(_directory));
@@ -724,7 +804,7 @@ public sealed class AnnoTapeAppTests
         Assert.IsTrue(predicate(), "The asynchronous operation did not complete in time.");
     }
 
-    private sealed class FakePlatform(string appDataPath) : IPlatformCapabilities
+    private class FakePlatform(string appDataPath) : IPlatformCapabilities
     {
 #pragma warning disable CS0067
         public event Action<PhotoSelection?>? ExternalPhotoCompleted;
@@ -738,5 +818,32 @@ public sealed class AnnoTapeAppTests
         public Task<string> PrepareDisplayImageAsync(string sourcePath, int rotationDegrees, CancellationToken cancellationToken = default) => Task.FromResult(sourcePath);
         public Task ShareFileAsync(string path, string contentType, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<bool> SaveFileAsync(string path, string suggestedName, string contentType, CancellationToken cancellationToken = default) => Task.FromResult(true);
+        public void CompleteExternalPhoto(PhotoSelection selection) => ExternalPhotoCompleted?.Invoke(selection);
+    }
+
+    private sealed class FakeMeterPlatform(string appDataPath) : FakePlatform(appDataPath), ILaserMeasureCapabilities
+    {
+#pragma warning disable CS0067
+        public event Action<string>? LaserMeasureStatusChanged;
+#pragma warning restore CS0067
+        public event Action<LaserMeasureReading>? LaserMeasurementReceived;
+        public bool LaserMeasureConnected { get; private set; }
+        public bool LaserMeasureReady { get; private set; }
+        public Task ConnectLaserMeasureAsync(CancellationToken cancellationToken = default)
+        {
+            LaserMeasureConnected = true;
+            LaserMeasureReady = true;
+            LaserMeasureStatusChanged?.Invoke("Meter connected");
+            return Task.CompletedTask;
+        }
+        public Task DisconnectLaserMeasureAsync()
+        {
+            LaserMeasureConnected = false;
+            LaserMeasureReady = false;
+            LaserMeasureStatusChanged?.Invoke("Meter disconnected");
+            return Task.CompletedTask;
+        }
+        public void Report(decimal millimetres) =>
+            LaserMeasurementReceived?.Invoke(new(millimetres, "test meter"));
     }
 }

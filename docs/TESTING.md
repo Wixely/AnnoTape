@@ -20,5 +20,6 @@ The following work remains owned by the release tester (owner: TBD):
 - TalkBack-only capture, edit, delete, undo, export, and return workflow
 - font scaling, cutouts, gesture navigation, keyboard reachability, and 44–48 dp touch targets
 - startup, picker return, decode, gesture latency, autosave, export time, and peak memory measurements
+- HOTO QWCJY001 first registration, reconnect with the stored token, automatic save to the selected measurement, unselected reading delivery in metric and imperial projects, disconnect/reconnect, meter timeout, permission denial, and recovery after another app replaces the meter token
 
 Record the device model, Android version, source pixel dimensions, result, and date in ISO format. Broad Android compatibility must not be claimed until this matrix passes on representative hardware.
