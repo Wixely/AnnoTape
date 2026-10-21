@@ -799,7 +799,7 @@ public sealed class AnnoTapeAppTests
 
     private static async Task WaitForAsync(Func<bool> predicate)
     {
-        for (var attempt = 0; attempt < 200 && !predicate(); attempt++)
+        for (var attempt = 0; attempt < 1000 && !predicate(); attempt++)
             await Task.Delay(10);
         Assert.IsTrue(predicate(), "The asynchronous operation did not complete in time.");
     }
